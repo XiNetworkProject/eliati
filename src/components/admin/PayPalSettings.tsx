@@ -29,15 +29,15 @@ export default function PayPalSettings() {
 
   const loadConfig = async () => {
     try {
-      // Charger la configuration depuis Supabase (table settings)
+      // Charger la configuration depuis Supabase (table site_settings)
       const { data } = await supabase
-        .from('settings')
-        .select('*')
-        .eq('key', 'paypal_config')
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', 'paypal_config')
         .single()
 
-      if (data?.value) {
-        setConfig(JSON.parse(data.value))
+      if (data?.setting_value) {
+        setConfig(data.setting_value as PayPalConfig)
       }
     } catch (error) {
       console.error('Erreur lors du chargement de la config:', error)
@@ -47,12 +47,12 @@ export default function PayPalSettings() {
   const handleSave = async () => {
     setLoading(true)
     try {
-      // Sauvegarder dans Supabase
+      // Sauvegarder dans Supabase (table site_settings)
       const { error } = await supabase
-        .from('settings')
+        .from('site_settings')
         .upsert({
-          key: 'paypal_config',
-          value: JSON.stringify(config),
+          setting_key: 'paypal_config',
+          setting_value: config,
           updated_at: new Date().toISOString()
         })
 

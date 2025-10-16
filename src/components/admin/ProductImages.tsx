@@ -39,7 +39,7 @@ export default function ProductImages({ productId, images, onUpdate }: ProductIm
         const fileExt = file.name.split('.').pop()
         const fileName = `${productId}-${Date.now()}-${i}.${fileExt}`
         
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('products')
           .upload(fileName, file)
 
@@ -60,7 +60,7 @@ export default function ProductImages({ productId, images, onUpdate }: ProductIm
             product_id: productId,
             url: urlData.publicUrl,
             alt: file.name.split('.')[0],
-            position: images.length + i
+            sort_order: images.length + i
           })
 
         if (dbError) {
