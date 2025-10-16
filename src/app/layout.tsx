@@ -4,7 +4,7 @@ import { cormorant, inter, allura } from "./fonts";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "EliAtis – Bijoux",
+  title: "EliAti – Bijoux",
   description: "Bijoux faits main – colliers, boucles, bagues, bracelets.",
 };
 

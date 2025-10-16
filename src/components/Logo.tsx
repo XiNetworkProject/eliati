@@ -1,12 +1,16 @@
+import Image from 'next/image'
+
 export default function Logo() {
   return (
     <div className="flex items-center gap-2">
-      {/* Option A: image du logo fourni */}
-      {/* <img src="/logo-eliatis.png" alt="EliAtis" className="h-8 w-auto"/> */}
-      {/* Option B: logo texte script */}
-      <span className="font-script text-3xl" style={{ letterSpacing: 1 }}>
-        EliAtis
-      </span>
+      <Image 
+        src="/logoeliatitransparent.png" 
+        alt="EliAti" 
+        width={120}
+        height={40}
+        className="h-8 w-auto"
+        priority
+      />
     </div>
   );
 }

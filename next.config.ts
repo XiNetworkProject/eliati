@@ -8,9 +8,8 @@ const nextConfig: NextConfig = {
         hostname: '**.supabase.co',
       },
     ],
-    // Pour les images locales SVG
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Pour les images locales PNG
+    formats: ['image/webp', 'image/avif'],
   },
 };
 

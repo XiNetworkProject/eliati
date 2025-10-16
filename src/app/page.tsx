@@ -39,7 +39,7 @@ export default async function Home() {
             Bijoux pensés à quatre mains, faits pour durer.
           </h2>
           <p className="text-taupe max-w-2xl mx-auto">
-            Chez <strong>EliAtis</strong>, deux sœurs transforment les souvenirs
+            Chez <strong>EliAti</strong>, deux sœurs transforment les souvenirs
             en parures. Des colliers délicats aux bagues fines, chaque pièce est
             assemblée avec soin, dans des tonalités ivory, champagne et or rose.
             Un style doux, intemporel, qui accompagne chaque moment.

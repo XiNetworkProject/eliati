@@ -27,11 +27,11 @@ export default function Footer() {
           </div>
           <div>
             <h3 className="font-display text-lg mb-3">Contact</h3>
-            <p className="text-sm text-taupe">contact@eliatis.fr</p>
+            <p className="text-sm text-taupe">contact@eliati.fr</p>
           </div>
         </div>
         <div className="border-t border-gold/20 mt-8 pt-6 text-center text-sm text-taupe">
-          <p>© {new Date().getFullYear()} EliAtis. Tous droits réservés.</p>
+          <p>© {new Date().getFullYear()} EliAti. Tous droits réservés.</p>
         </div>
       </div>
     </footer>

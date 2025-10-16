@@ -1,4 +1,4 @@
-# 🛍️ EliAtis - Boutique de bijoux
+# 🛍️ EliAti - Boutique de bijoux
 
 Boutique e-commerce de bijoux faits main, construite avec Next.js 15, Supabase et Tailwind CSS.
 
@@ -212,4 +212,4 @@ Projet privé © 2025 EliAtis
 
 ---
 
-**Fait avec ❤️ par deux sœurs passionnées de bijoux**
+**Fait avec ❤️ par deux sœurs passionnées de bijoux - EliAti**

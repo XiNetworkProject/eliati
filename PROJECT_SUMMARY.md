@@ -1,8 +1,8 @@
-# 📋 Résumé du projet EliAtis
+# 📋 Résumé du projet EliAti
 
 ## ✅ Ce qui a été créé
 
-Votre boutique de bijoux **EliAtis** est maintenant prête ! Voici ce qui a été mis en place :
+Votre boutique de bijoux **EliAti** est maintenant prête ! Voici ce qui a été mis en place :
 
 ### 🎨 Design & Interface
 
@@ -235,5 +235,5 @@ Vous avez maintenant une boutique e-commerce moderne et performante, prête à �
 
 ---
 
-**Créé avec ❤️ pour EliAtis - Bijoux faits main par deux sœurs**
+**Créé avec ❤️ pour EliAti - Bijoux faits main par deux sœurs**
 
