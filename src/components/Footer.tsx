@@ -27,7 +27,7 @@ export default function Footer() {
           </div>
           <div>
             <h3 className="font-display text-lg mb-3">Contact</h3>
-            <p className="text-sm text-taupe">Contacteliati@gmail.com</p>
+             <p className="text-sm text-taupe">Contacteliati@gmail.com</p>
           </div>
         </div>
         <div className="border-t border-gold/20 mt-8 pt-6 text-center text-sm text-taupe">
