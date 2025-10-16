@@ -30,7 +30,7 @@ export default function PayPalSettings() {
   const loadConfig = async () => {
     try {
       // Charger la configuration depuis Supabase (table settings)
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('settings')
         .select('*')
         .eq('key', 'paypal_config')
@@ -70,7 +70,7 @@ export default function PayPalSettings() {
 
   const testConnection = async () => {
     if (!config.client_id || !config.client_secret) {
-      alert('Veuillez d\'abord configurer vos identifiants PayPal')
+      alert('Veuillez d&apos;abord configurer vos identifiants PayPal')
       return
     }
 
@@ -91,7 +91,7 @@ export default function PayPalSettings() {
       } else {
         alert('❌ Erreur de connexion PayPal. Vérifiez vos identifiants.')
       }
-    } catch (error) {
+    } catch {
       alert('❌ Erreur lors du test de connexion')
     }
   }
@@ -211,7 +211,7 @@ export default function PayPalSettings() {
 
       {/* Guide d'installation */}
       <Card className="p-6 bg-champagne/20">
-        <h3 className="font-display text-lg text-leather mb-4">📋 Guide d'installation PayPal</h3>
+        <h3 className="font-display text-lg text-leather mb-4">📋 Guide d&apos;installation PayPal</h3>
         <div className="space-y-4 text-sm text-taupe">
           <div>
             <h4 className="font-medium text-leather mb-2">1. Créer un compte PayPal Developer</h4>
@@ -250,7 +250,7 @@ export default function PayPalSettings() {
           <p>• Vos identifiants PayPal sont chiffrés et stockés de manière sécurisée</p>
           <p>• Ne partagez jamais votre Client Secret</p>
           <p>• Utilisez toujours HTTPS en production</p>
-          <p>• Testez d'abord en mode Sandbox</p>
+          <p>• Testez d&apos;abord en mode Sandbox</p>
         </div>
       </Card>
     </div>

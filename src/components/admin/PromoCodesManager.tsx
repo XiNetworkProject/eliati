@@ -380,7 +380,7 @@ function PromoCodeForm({
             {/* Limite d'utilisation */}
             <div>
               <label className="block text-sm font-medium text-leather mb-2">
-                Limite d'utilisation
+                Limite d&apos;utilisation
               </label>
               <Input
                 type="number"
@@ -393,14 +393,14 @@ function PromoCodeForm({
                 placeholder="100"
               />
               <p className="text-xs text-taupe mt-1">
-                Nombre maximum d'utilisations (laissez vide pour illimité)
+                Nombre maximum d&apos;utilisations (laissez vide pour illimité)
               </p>
             </div>
 
             {/* Date d'expiration */}
             <div>
               <label className="block text-sm font-medium text-leather mb-2">
-                Date d'expiration
+                Date d&apos;expiration
               </label>
               <Input
                 type="date"

@@ -31,13 +31,6 @@ type Category = {
   description: string | null
 }
 
-type ProductImage = {
-  id: number
-  product_id: string
-  url: string
-  alt: string | null
-  position: number
-}
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
@@ -107,7 +100,7 @@ export default function AdminDashboard() {
   }
 
   const tabs = [
-    { id: 'overview', label: '📊 Vue d\'ensemble', icon: '📊' },
+    { id: 'overview', label: '📊 Vue d&apos;ensemble', icon: '📊' },
     { id: 'products', label: '🛍️ Produits', icon: '🛍️' },
     { id: 'categories', label: '📂 Catégories', icon: '📂' },
     { id: 'carousel', label: '🎠 Carousel', icon: '🎠' },
@@ -122,7 +115,7 @@ export default function AdminDashboard() {
       <div className="min-h-screen bg-ivory flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-leather mx-auto mb-4"></div>
-          <p className="text-taupe">Chargement de l'administration...</p>
+          <p className="text-taupe">Chargement de l&apos;administration...</p>
         </div>
       </div>
     )
@@ -183,7 +176,6 @@ export default function AdminDashboard() {
             <ProductsTab 
               products={products} 
               categories={categories} 
-              onUpdate={loadData}
               onEdit={(product) => {
                 setEditingProduct(product)
                 setShowProductForm(true)
@@ -192,7 +184,7 @@ export default function AdminDashboard() {
               onManageImages={(product) => setSelectedProduct(product)}
             />
           )}
-          {activeTab === 'categories' && <CategoriesTab categories={categories} onUpdate={loadData} />}
+          {activeTab === 'categories' && <CategoriesTab categories={categories} />}
           {activeTab === 'carousel' && <CarouselTab />}
           {activeTab === 'promos' && <PromoCodesManager />}
           {activeTab === 'orders' && <OrdersTab />}
@@ -282,7 +274,7 @@ function OverviewTab({ products, categories }: { products: Product[], categories
       <Card className="p-6 bg-taupe/30">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-taupe">Commandes aujourd'hui</p>
+            <p className="text-sm text-taupe">Commandes aujourd&apos;hui</p>
             <p className="text-2xl font-bold text-leather">0</p>
           </div>
           <div className="text-3xl">📦</div>
@@ -296,30 +288,20 @@ function OverviewTab({ products, categories }: { products: Product[], categories
 function ProductsTab({ 
   products, 
   categories, 
-  onUpdate, 
   onEdit, 
   onDelete, 
   onManageImages 
 }: { 
   products: Product[]
   categories: Category[]
-  onUpdate: () => void
   onEdit: (product: Product) => void
   onDelete: (productId: string) => void
   onManageImages: (product: Product) => void
 }) {
-  const [showAddForm, setShowAddForm] = useState(false)
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="font-display text-2xl text-leather">Gestion des produits</h2>
-        <Button 
-          onClick={() => setShowAddForm(true)}
-          className="bg-leather text-ivory hover:bg-leather/90"
-        >
-          + Ajouter un produit
-        </Button>
       </div>
 
       {/* Liste des produits */}
@@ -392,13 +374,7 @@ function ProductsTab({
         <Card className="p-8 text-center">
           <div className="text-4xl mb-4">🛍️</div>
           <h3 className="font-display text-lg text-leather mb-2">Aucun produit</h3>
-          <p className="text-taupe mb-4">Commencez par ajouter votre premier produit</p>
-          <Button 
-            onClick={() => setShowAddForm(true)}
-            className="bg-leather text-ivory hover:bg-leather/90"
-          >
-            Ajouter un produit
-          </Button>
+          <p className="text-taupe">Commencez par ajouter votre premier produit</p>
         </Card>
       )}
     </div>
@@ -406,9 +382,8 @@ function ProductsTab({
 }
 
 // Composant Gestion des catégories
-function CategoriesTab({ categories, onUpdate }: { 
-  categories: Category[], 
-  onUpdate: () => void 
+function CategoriesTab({ categories }: { 
+  categories: Category[]
 }) {
   return (
     <div className="space-y-6">
@@ -462,38 +437,12 @@ function CarouselTab() {
       <Card className="p-6">
         <p className="text-taupe mb-4">
           Gérez les slides du carousel principal de votre site. 
-          Vous pouvez ajouter jusqu'à 5 slides maximum.
+          Vous pouvez ajouter jusqu&apos;à 5 slides maximum.
         </p>
         <div className="text-center py-8 text-taupe">
           <div className="text-4xl mb-2">🎠</div>
           <p>Aucune slide configurée</p>
           <p className="text-sm">Ajoutez votre première slide pour commencer</p>
-        </div>
-      </Card>
-    </div>
-  )
-}
-
-// Composant Gestion des codes promo
-function PromosTab() {
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="font-display text-2xl text-leather">Codes promotionnels</h2>
-        <Button className="bg-leather text-ivory hover:bg-leather/90">
-          + Créer un code promo
-        </Button>
-      </div>
-
-      <Card className="p-6">
-        <p className="text-taupe mb-4">
-          Créez des codes de réduction pour vos clients. 
-          Vous pouvez définir des réductions en pourcentage ou en montant fixe.
-        </p>
-        <div className="text-center py-8 text-taupe">
-          <div className="text-4xl mb-2">🎫</div>
-          <p>Aucun code promo créé</p>
-          <p className="text-sm">Créez votre premier code promo</p>
         </div>
       </Card>
     </div>
@@ -550,56 +499,3 @@ function AnalyticsTab() {
   )
 }
 
-// Composant Paramètres
-function SettingsTab() {
-  return (
-    <div className="space-y-6">
-      <h2 className="font-display text-2xl text-leather">Paramètres du site</h2>
-      
-      <Card className="p-6">
-        <h3 className="font-display text-lg mb-4">Configuration PayPal</h3>
-        <p className="text-taupe mb-4">
-          Configurez PayPal pour accepter les paiements de vos clients.
-        </p>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-leather mb-2">
-              Client ID PayPal
-            </label>
-            <Input placeholder="Votre Client ID PayPal" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-leather mb-2">
-              Secret PayPal
-            </label>
-            <Input type="password" placeholder="Votre Secret PayPal" />
-          </div>
-          <Button className="bg-leather text-ivory hover:bg-leather/90">
-            Sauvegarder la configuration
-          </Button>
-        </div>
-      </Card>
-
-      <Card className="p-6">
-        <h3 className="font-display text-lg mb-4">Informations de contact</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-leather mb-2">
-              Email de contact
-            </label>
-            <Input defaultValue="Contacteliati@gmail.com" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-leather mb-2">
-              Téléphone
-            </label>
-            <Input placeholder="Votre numéro de téléphone" />
-          </div>
-          <Button className="bg-leather text-ivory hover:bg-leather/90">
-            Mettre à jour
-          </Button>
-        </div>
-      </Card>
-    </div>
-  )
-}
