@@ -9,6 +9,7 @@ import ProductForm from '@/components/admin/ProductForm'
 import ProductImages from '@/components/admin/ProductImages'
 import PromoCodesManager from '@/components/admin/PromoCodesManager'
 import PayPalSettings from '@/components/admin/PayPalSettings'
+import CarouselManager from '@/components/admin/CarouselManager'
 
 // Types pour l'administration
 type Product = {
@@ -220,7 +221,7 @@ export default function AdminDashboard() {
             />
           )}
           {activeTab === 'categories' && <CategoriesTab categories={categories} onUpdate={loadData} />}
-          {activeTab === 'carousel' && <CarouselTab />}
+          {activeTab === 'carousel' && <CarouselManager />}
           {activeTab === 'promos' && <PromoCodesManager />}
           {activeTab === 'orders' && <OrdersTab />}
           {activeTab === 'analytics' && <AnalyticsTab />}
@@ -571,99 +572,6 @@ function CategoriesTab({ categories, onUpdate }: {
           </Card>
         ))}
       </div>
-    </div>
-  )
-}
-
-// Composant Gestion du carousel
-function CarouselTab() {
-  const [slides, setSlides] = useState<Array<{ id: string; title: string | null; subtitle: string | null; image_url: string; link_url: string | null; button_text: string | null; sort_order: number; is_active: boolean }>>([])
-  const [loadingSlides, setLoadingSlides] = useState(true)
-
-  useEffect(() => {
-    const loadSlides = async () => {
-      setLoadingSlides(true)
-      const { data } = await supabase
-        .from('carousel_slides')
-        .select('*')
-        .order('sort_order', { ascending: true })
-      setSlides(data || [])
-      setLoadingSlides(false)
-    }
-    loadSlides()
-  }, [])
-
-  const addSlide = async () => {
-    const image = prompt('URL de l\'image (hébergée dans /public/hero ou URL publique)')
-    if (!image) return
-    await supabase.from('carousel_slides').insert({ image_url: image, sort_order: slides.length })
-    const { data } = await supabase
-      .from('carousel_slides')
-      .select('*')
-      .order('sort_order', { ascending: true })
-    setSlides(data || [])
-  }
-
-  const removeSlide = async (id: string) => {
-    if (!confirm('Supprimer cette slide ?')) return
-    await supabase.from('carousel_slides').delete().eq('id', id)
-    const { data } = await supabase
-      .from('carousel_slides')
-      .select('*')
-      .order('sort_order', { ascending: true })
-    setSlides(data || [])
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="font-display text-2xl text-leather">Gestion du carousel</h2>
-        <Button className="bg-leather text-ivory hover:bg-leather/90" onClick={addSlide}>
-          + Ajouter une slide
-        </Button>
-      </div>
-
-      <Card className="overflow-hidden bg-white/80 backdrop-blur-sm border-gold/20">
-        {loadingSlides ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-leather mx-auto mb-3"></div>
-            <p className="text-taupe text-sm">Chargement des slides...</p>
-          </div>
-        ) : slides.length === 0 ? (
-          <div className="text-center py-12 px-6">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-champagne/30 to-champagne/10 border border-gold/20 flex items-center justify-center">
-              <svg className="w-8 h-8 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <h3 className="font-display text-xl text-leather mb-2">Aucune slide configurée</h3>
-            <p className="text-taupe text-sm">Ajoutez votre première slide pour commencer</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
-            {slides.map((s) => (
-              <Card key={s.id} className="group overflow-hidden bg-white border-gold/20 hover:shadow-md transition-all">
-                <div className="aspect-video bg-gradient-to-br from-champagne/20 to-rose/10 border-b border-gold/20 flex items-center justify-center p-4">
-                  <span className="text-taupe text-xs truncate px-2">{s.image_url}</span>
-                </div>
-                <div className="p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-leather text-sm font-medium">Position {s.sort_order + 1}</p>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${s.is_active ? 'bg-gold/10 text-leather border border-gold/30' : 'bg-taupe/10 text-taupe border border-taupe/30'}`}>
-                      {s.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                  <Button variant="outline" size="sm" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => removeSlide(s.id)}>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </Button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </Card>
     </div>
   )
 }

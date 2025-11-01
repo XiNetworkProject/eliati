@@ -106,12 +106,24 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('products', 'products', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
 
--- Permettre l'upload et la lecture publique
-DROP POLICY IF EXISTS "Public Access" ON storage.objects;
-CREATE POLICY "Public Access"
+-- Créer le bucket 'carousel' s'il n'existe pas
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('carousel', 'carousel', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Permettre l'upload et la lecture publique pour 'products'
+DROP POLICY IF EXISTS "Public Access Products" ON storage.objects;
+CREATE POLICY "Public Access Products"
 ON storage.objects FOR ALL
 USING (bucket_id = 'products')
 WITH CHECK (bucket_id = 'products');
+
+-- Permettre l'upload et la lecture publique pour 'carousel'
+DROP POLICY IF EXISTS "Public Access Carousel" ON storage.objects;
+CREATE POLICY "Public Access Carousel"
+ON storage.objects FOR ALL
+USING (bucket_id = 'carousel')
+WITH CHECK (bucket_id = 'carousel');
 
 -- =====================================================
 -- MESSAGE DE CONFIRMATION
