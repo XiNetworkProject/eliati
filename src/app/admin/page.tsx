@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
 import ProductForm from '@/components/admin/ProductForm'
 import ProductImages from '@/components/admin/ProductImages'
@@ -398,7 +397,7 @@ function ProductsTab({
         <h2 className="font-display text-2xl text-leather">Gestion des produits</h2>
         <Button 
           className="bg-leather text-ivory hover:bg-leather/90"
-          onClick={() => onEdit(null as any)}
+          onClick={() => onEdit({} as Product)}
         >
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
