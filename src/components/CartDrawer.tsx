@@ -12,18 +12,20 @@ type CartDrawerProps = {
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, itemCount, total, removeItem } = useCart()
 
-  if (!isOpen) return null
-
   return (
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 transition-opacity animate-in fade-in duration-300"
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-50 transition-all duration-300 ${
+          isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+        }`}
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-gradient-to-br from-ivory via-champagne/10 to-rose/5 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
+      <div className={`fixed right-0 top-0 h-full w-full max-w-md bg-gradient-to-br from-ivory via-champagne/10 to-rose/5 shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
+        isOpen ? 'translate-x-0' : 'translate-x-full'
+      }`}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gold/20 bg-white/80 backdrop-blur-sm">
           <div className="flex items-center gap-3">
