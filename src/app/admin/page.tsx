@@ -270,8 +270,30 @@ export default function AdminDashboard() {
 
 // Composant Vue d'ensemble
 function OverviewTab({ products, categories }: { products: Product[], categories: Category[] }) {
+  const [stats, setStats] = useState({ todayOrders: 0, totalRevenue: 0, paidOrders: 0 })
   const activeProducts = products.filter(p => p.status === 'active').length
-  const totalRevenue = products.reduce((sum, p) => sum + p.price_cents, 0) / 100
+  
+  useEffect(() => {
+    const loadStats = async () => {
+      const { data: allOrders } = await supabase
+        .from('orders')
+        .select('total_cents, status, created_at')
+      
+      if (allOrders) {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        
+        const todayOrders = allOrders.filter(o => new Date(o.created_at) >= today).length
+        const totalRevenue = allOrders
+          .filter(o => o.status === 'paid' || o.status === 'shipped' || o.status === 'delivered')
+          .reduce((sum, o) => sum + o.total_cents, 0) / 100
+        const paidOrders = allOrders.filter(o => o.status === 'paid' || o.status === 'shipped' || o.status === 'delivered').length
+        
+        setStats({ todayOrders, totalRevenue, paidOrders })
+      }
+    }
+    loadStats()
+  }, [])
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -314,8 +336,9 @@ function OverviewTab({ products, categories }: { products: Product[], categories
         <div className="relative p-6">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs uppercase tracking-wider text-taupe/80 mb-2">Valeur catalogue</p>
-              <p className="text-3xl font-semibold text-leather">{totalRevenue.toFixed(2)} €</p>
+              <p className="text-xs uppercase tracking-wider text-taupe/80 mb-2">Revenus totaux</p>
+              <p className="text-3xl font-semibold text-leather">{stats.totalRevenue.toFixed(2)} €</p>
+              <p className="text-xs text-taupe mt-1">{stats.paidOrders} commandes payées</p>
             </div>
             <div className="p-3 rounded-xl bg-gradient-to-br from-mauve/30 to-mauve/10 border border-gold/20">
               <svg className="w-5 h-5 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -332,7 +355,7 @@ function OverviewTab({ products, categories }: { products: Product[], categories
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs uppercase tracking-wider text-taupe/80 mb-2">Commandes aujourd&apos;hui</p>
-              <p className="text-3xl font-semibold text-leather">0</p>
+              <p className="text-3xl font-semibold text-leather">{stats.todayOrders}</p>
             </div>
             <div className="p-3 rounded-xl bg-gradient-to-br from-taupe/30 to-taupe/10 border border-gold/20">
               <svg className="w-5 h-5 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -641,62 +664,250 @@ function CarouselTab() {
 
 // Composant Gestion des commandes
 function OrdersTab() {
-  const [orders, setOrders] = useState<Array<{ id: string; customer_email: string; customer_name: string | null; total_cents: number; status: string; created_at: string }>>([])
+  const [orders, setOrders] = useState<Array<{
+    id: string
+    customer_email: string
+    customer_name: string | null
+    customer_phone: string | null
+    shipping_address: any
+    total_cents: number
+    subtotal_cents: number
+    discount_cents: number
+    shipping_cents: number
+    status: string
+    paypal_order_id: string | null
+    notes: string | null
+    created_at: string
+  }>>([])
   const [loadingOrders, setLoadingOrders] = useState(true)
+  const [selectedOrder, setSelectedOrder] = useState<string | null>(null)
+  const [orderItems, setOrderItems] = useState<Array<{ product_name: string; quantity: number; product_price_cents: number }>>([])
 
   useEffect(() => {
-    const loadOrders = async () => {
-      setLoadingOrders(true)
-      const { data } = await supabase
-        .from('orders')
-        .select('id,customer_email,customer_name,total_cents,status,created_at')
-        .order('created_at', { ascending: false })
-      setOrders(data || [])
-      setLoadingOrders(false)
-    }
     loadOrders()
   }, [])
 
+  const loadOrders = async () => {
+    setLoadingOrders(true)
+    const { data } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+    setOrders(data || [])
+    setLoadingOrders(false)
+  }
+
+  const loadOrderItems = async (orderId: string) => {
+    const { data } = await supabase
+      .from('order_items')
+      .select('product_name, quantity, product_price_cents')
+      .eq('order_id', orderId)
+    setOrderItems(data || [])
+  }
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    await supabase
+      .from('orders')
+      .update({ status: newStatus })
+      .eq('id', orderId)
+    loadOrders()
+  }
+
+  const getStatusBadge = (status: string) => {
+    const styles: Record<string, string> = {
+      pending: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      paid: 'bg-green-100 text-green-800 border-green-300',
+      shipped: 'bg-blue-100 text-blue-800 border-blue-300',
+      delivered: 'bg-purple-100 text-purple-800 border-purple-300',
+      cancelled: 'bg-red-100 text-red-800 border-red-300',
+    }
+    const labels: Record<string, string> = {
+      pending: 'En attente',
+      paid: 'Payée',
+      shipped: 'Expédiée',
+      delivered: 'Livrée',
+      cancelled: 'Annulée',
+    }
+    return (
+      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${styles[status] || styles.pending}`}>
+        {labels[status] || status}
+      </span>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      <h2 className="font-display text-2xl text-leather">Commandes clients</h2>
-      <Card className="overflow-hidden bg-white/80 backdrop-blur-sm border-gold/20">
-        {loadingOrders ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-leather mx-auto mb-3"></div>
-            <p className="text-taupe text-sm">Chargement des commandes...</p>
+      <div className="flex justify-between items-center">
+        <h2 className="font-display text-2xl text-leather">Commandes clients</h2>
+        <Button onClick={loadOrders} variant="outline" className="border-leather/20">
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Actualiser
+        </Button>
+      </div>
+
+      {loadingOrders ? (
+        <Card className="p-8 text-center bg-white/80 backdrop-blur-sm border-gold/20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-leather mx-auto mb-3"></div>
+          <p className="text-taupe text-sm">Chargement des commandes...</p>
+        </Card>
+      ) : orders.length === 0 ? (
+        <Card className="p-12 text-center bg-white/80 backdrop-blur-sm border-gold/20">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-champagne/30 to-champagne/10 border border-gold/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
           </div>
-        ) : orders.length === 0 ? (
-          <div className="text-center py-12 px-6">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-champagne/30 to-champagne/10 border border-gold/20 flex items-center justify-center">
-              <svg className="w-8 h-8 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
-            </div>
-            <h3 className="font-display text-xl text-leather mb-2">Aucune commande pour le moment</h3>
-            <p className="text-taupe text-sm">Les commandes apparaîtront ici une fois PayPal configuré</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-gold/10">
-            {orders.map((o) => (
-              <div key={o.id} className="p-5 hover:bg-champagne/10 transition-colors">
-                <div className="flex items-center justify-between">
+          <h3 className="font-display text-xl text-leather mb-2">Aucune commande</h3>
+          <p className="text-taupe text-sm">Les commandes apparaîtront ici</p>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {orders.map((order) => (
+            <Card key={order.id} className="overflow-hidden bg-white/80 backdrop-blur-sm border-gold/20 hover:shadow-lg transition-all">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <p className="text-leather font-medium mb-1">{o.customer_name || o.customer_email}</p>
-                    <p className="text-taupe text-sm">{new Date(o.created_at).toLocaleString('fr-FR')}</p>
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-display text-lg text-leather">{order.customer_name}</h3>
+                      {getStatusBadge(order.status)}
+                    </div>
+                    <p className="text-sm text-taupe mb-1">{order.customer_email}</p>
+                    <p className="text-sm text-taupe mb-1">{order.customer_phone}</p>
+                    <p className="text-xs text-taupe">
+                      Commande #{order.id.slice(0, 8)} • {new Date(order.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
                   </div>
-                  <div className="text-right ml-4">
-                    <p className="text-leather font-semibold text-lg mb-1">{(o.total_cents / 100).toFixed(2)} €</p>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gold/10 text-leather border border-gold/30">
-                      {o.status}
-                    </span>
+                  <div className="text-right">
+                    <p className="font-display text-2xl text-leather mb-1">{(order.total_cents / 100).toFixed(2)} €</p>
+                    <p className="text-xs text-taupe">
+                      {order.paypal_order_id && (
+                        <span className="block">PayPal: {order.paypal_order_id.slice(0, 12)}...</span>
+                      )}
+                    </p>
                   </div>
                 </div>
+
+                {/* Adresse */}
+                {order.shipping_address && (
+                  <div className="p-3 bg-champagne/10 rounded-lg mb-4">
+                    <p className="text-xs uppercase tracking-wide text-taupe mb-1">Adresse de livraison</p>
+                    <p className="text-sm text-leather">
+                      {order.shipping_address.address}
+                      {order.shipping_address.addressComplement && `, ${order.shipping_address.addressComplement}`}
+                    </p>
+                    <p className="text-sm text-leather">
+                      {order.shipping_address.postalCode} {order.shipping_address.city}, {order.shipping_address.country}
+                    </p>
+                  </div>
+                )}
+
+                {/* Notes */}
+                {order.notes && (
+                  <div className="p-3 bg-rose/10 rounded-lg mb-4">
+                    <p className="text-xs uppercase tracking-wide text-taupe mb-1">Notes du client</p>
+                    <p className="text-sm text-leather italic">{order.notes}</p>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center justify-between pt-4 border-t border-gold/20">
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (selectedOrder === order.id) {
+                          setSelectedOrder(null)
+                          setOrderItems([])
+                        } else {
+                          setSelectedOrder(order.id)
+                          loadOrderItems(order.id)
+                        }
+                      }}
+                      className="border-leather/20"
+                    >
+                      {selectedOrder === order.id ? 'Masquer' : 'Voir'} les articles
+                    </Button>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    {order.status === 'paid' && (
+                      <Button
+                        size="sm"
+                        onClick={() => updateOrderStatus(order.id, 'shipped')}
+                        className="bg-blue-600 text-white hover:bg-blue-700"
+                      >
+                        Marquer comme expédiée
+                      </Button>
+                    )}
+                    {order.status === 'shipped' && (
+                      <Button
+                        size="sm"
+                        onClick={() => updateOrderStatus(order.id, 'delivered')}
+                        className="bg-purple-600 text-white hover:bg-purple-700"
+                      >
+                        Marquer comme livrée
+                      </Button>
+                    )}
+                    {order.status === 'pending' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => updateOrderStatus(order.id, 'cancelled')}
+                        className="border-red-300 text-red-600 hover:bg-red-50"
+                      >
+                        Annuler
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Détails des articles */}
+                {selectedOrder === order.id && orderItems.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gold/20">
+                    <p className="text-xs uppercase tracking-wide text-taupe mb-3">Articles commandés</p>
+                    <div className="space-y-2">
+                      {orderItems.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gold/20">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-leather">{item.product_name}</p>
+                            <p className="text-xs text-taupe">Quantité: {item.quantity}</p>
+                          </div>
+                          <p className="text-sm font-semibold text-leather">
+                            {((item.product_price_cents * item.quantity) / 100).toFixed(2)} €
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 p-3 bg-gradient-to-br from-champagne/20 to-rose/10 rounded-lg">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-taupe">Sous-total</span>
+                        <span className="text-leather">{(order.subtotal_cents / 100).toFixed(2)} €</span>
+                      </div>
+                      {order.discount_cents > 0 && (
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-green-700">Réduction</span>
+                          <span className="text-green-700">-{(order.discount_cents / 100).toFixed(2)} €</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-taupe">Livraison</span>
+                        <span className="text-leather">{(order.shipping_cents / 100).toFixed(2)} €</span>
+                      </div>
+                      <div className="flex justify-between text-base font-semibold pt-2 border-t border-gold/30">
+                        <span className="text-leather">Total</span>
+                        <span className="text-leather">{(order.total_cents / 100).toFixed(2)} €</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
-      </Card>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
