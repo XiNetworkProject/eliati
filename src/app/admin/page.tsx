@@ -21,6 +21,12 @@ type Product = {
   status: 'active' | 'draft'
   category_id: string | null
   created_at: string
+  stock_quantity?: number | null
+  stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'preorder'
+  low_stock_threshold?: number
+  preorder_limit?: number | null
+  preorder_count?: number
+  preorder_available_date?: string | null
 }
 
 type Category = {
