@@ -17,19 +17,17 @@ export default function PayPalButton({ amount, orderId, onSuccess, onError }: Pa
   useEffect(() => {
     const loadPayPalConfig = async () => {
       try {
+        // Charger la config PayPal complète (même clé que dans PayPalSettings)
         const { data } = await supabase
           .from('site_settings')
           .select('setting_value')
-          .eq('setting_key', 'paypal_client_id')
+          .eq('setting_key', 'paypal_config')
           .single()
 
         if (data?.setting_value) {
-          // Le setting_value est en JSON, donc on parse
-          const clientIdValue = typeof data.setting_value === 'string' 
-            ? JSON.parse(data.setting_value) 
-            : data.setting_value
-
-          setClientId(clientIdValue || null)
+          // Le setting_value contient l'objet config avec client_id, client_secret, mode, currency
+          const config = data.setting_value as { client_id: string; client_secret: string; mode: string; currency: string }
+          setClientId(config.client_id || null)
         }
       } catch (error) {
         console.error('Erreur lors du chargement de la config PayPal:', error)
@@ -104,11 +102,11 @@ export default function PayPalButton({ amount, orderId, onSuccess, onError }: Pa
             .update({
               status: 'paid',
               paypal_order_id: order.id,
-              paypal_payment_id: order.purchase_units[0].payments?.captures?.[0]?.id,
+              paypal_payment_id: order.purchase_units?.[0]?.payments?.captures?.[0]?.id || null,
             })
             .eq('id', orderId)
 
-          onSuccess(order.id)
+          onSuccess(order.id || '')
         }}
         onError={(err) => {
           console.error('Erreur PayPal:', err)
