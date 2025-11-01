@@ -47,16 +47,36 @@ export default function PayPalSettings() {
   const handleSave = async () => {
     setLoading(true)
     try {
-      // Sauvegarder dans Supabase (table site_settings)
-      const { error } = await supabase
+      // Vérifier si la config existe déjà
+      const { data: existing } = await supabase
         .from('site_settings')
-        .upsert({
-          setting_key: 'paypal_config',
-          setting_value: config,
-          updated_at: new Date().toISOString()
-        })
+        .select('id')
+        .eq('setting_key', 'paypal_config')
+        .single()
 
-      if (error) throw error
+      if (existing) {
+        // UPDATE si existe
+        const { error } = await supabase
+          .from('site_settings')
+          .update({
+            setting_value: config,
+            updated_at: new Date().toISOString()
+          })
+          .eq('setting_key', 'paypal_config')
+
+        if (error) throw error
+      } else {
+        // INSERT si n'existe pas
+        const { error } = await supabase
+          .from('site_settings')
+          .insert({
+            setting_key: 'paypal_config',
+            setting_value: config,
+            updated_at: new Date().toISOString()
+          })
+
+        if (error) throw error
+      }
 
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
