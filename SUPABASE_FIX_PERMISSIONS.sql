@@ -125,6 +125,18 @@ ON storage.objects FOR ALL
 USING (bucket_id = 'carousel')
 WITH CHECK (bucket_id = 'carousel');
 
+-- Créer le bucket 'categories' s'il n'existe pas
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('categories', 'categories', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Permettre l'upload et la lecture publique pour 'categories'
+DROP POLICY IF EXISTS "Public Access Categories" ON storage.objects;
+CREATE POLICY "Public Access Categories"
+ON storage.objects FOR ALL
+USING (bucket_id = 'categories')
+WITH CHECK (bucket_id = 'categories');
+
 -- =====================================================
 -- MESSAGE DE CONFIRMATION
 -- =====================================================

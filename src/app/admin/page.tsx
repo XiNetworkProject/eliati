@@ -10,6 +10,7 @@ import ProductImages from '@/components/admin/ProductImages'
 import PromoCodesManager from '@/components/admin/PromoCodesManager'
 import PayPalSettings from '@/components/admin/PayPalSettings'
 import CarouselManager from '@/components/admin/CarouselManager'
+import CategoryManager from '@/components/admin/CategoryManager'
 
 // Types pour l'administration
 type Product = {
@@ -35,6 +36,7 @@ type Category = {
   name: string
   slug: string
   description: string | null
+  image_url: string | null
 }
 
 
@@ -85,7 +87,7 @@ export default function AdminDashboard() {
       // Charger les catégories
       const { data: categoriesData } = await supabase
         .from('categories')
-        .select('*')
+        .select('id, name, slug, description, image_url')
         .order('name')
       
       setProducts(productsData || [])
@@ -220,7 +222,7 @@ export default function AdminDashboard() {
               onManageImages={(product) => setSelectedProduct(product)}
             />
           )}
-          {activeTab === 'categories' && <CategoriesTab categories={categories} onUpdate={loadData} />}
+          {activeTab === 'categories' && <CategoryManager categories={categories} onUpdate={loadData} />}
           {activeTab === 'carousel' && <CarouselManager />}
           {activeTab === 'promos' && <PromoCodesManager />}
           {activeTab === 'orders' && <OrdersTab />}
@@ -492,86 +494,6 @@ function ProductsTab({
           <p className="text-taupe text-sm">Commencez par ajouter votre premier produit</p>
         </Card>
       )}
-    </div>
-  )
-}
-
-// Composant Gestion des catégories
-function CategoriesTab({ categories, onUpdate }: { 
-  categories: Category[]
-  onUpdate: () => void
-}) {
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="font-display text-2xl text-leather">Gestion des catégories</h2>
-        <Button 
-          className="bg-leather text-ivory hover:bg-leather/90"
-          onClick={async () => {
-            const name = prompt('Nom de la catégorie')
-            if (!name) return
-            const slug = name
-              .toLowerCase()
-              .normalize('NFD')
-              .replace(/\p{Diacritic}/gu, '')
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/(^-|-$)/g, '')
-
-            await supabase.from('categories').insert({ name, slug })
-            await onUpdate()
-          }}
-        >
-          + Ajouter une catégorie
-        </Button>
-      </div>
-
-      <div className="grid gap-4">
-        {categories.map((category) => (
-          <Card key={category.id} className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-display text-lg text-leather">{category.name}</h3>
-                <p className="text-sm text-taupe">{category.description}</p>
-                <Badge className="mt-1 bg-champagne text-leather">
-                  {category.slug}
-                </Badge>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={async () => {
-                    const name = prompt('Nouveau nom', category.name)
-                    if (!name) return
-                    const slug = name
-                      .toLowerCase()
-                      .normalize('NFD')
-                      .replace(/\p{Diacritic}/gu, '')
-                      .replace(/[^a-z0-9]+/g, '-')
-                      .replace(/(^-|-$)/g, '')
-                    await supabase.from('categories').update({ name, slug }).eq('id', category.id)
-                    await onUpdate()
-                  }}
-                >
-                  Modifier
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="text-red-600 border-red-600 hover:bg-red-50"
-                  onClick={async () => {
-                    if (!confirm('Supprimer cette catégorie ?')) return
-                    await supabase.from('categories').delete().eq('id', category.id)
-                    await onUpdate()
-                  }}
-                >
-                  Supprimer
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
     </div>
   )
 }
