@@ -364,6 +364,15 @@ function ProductsTab({
     <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="font-display text-2xl text-leather">Gestion des produits</h2>
+        <Button 
+          className="bg-leather text-ivory hover:bg-leather/90"
+          onClick={() => onEdit(null as any)}
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Ajouter un produit
+        </Button>
       </div>
 
       {/* Liste des produits */}
