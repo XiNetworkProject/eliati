@@ -14,6 +14,12 @@ type Product = {
   compare_at_cents: number | null
   status: 'active' | 'draft'
   category_id: string | null
+  stock_quantity: number | null
+  stock_status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'preorder'
+  low_stock_threshold: number
+  preorder_limit: number | null
+  preorder_count: number
+  preorder_available_date: string | null
 }
 
 type Category = {
@@ -38,6 +44,12 @@ export default function ProductForm({ product, categories, onClose, onSuccess }:
     compare_at_cents: product?.compare_at_cents || null,
     status: product?.status || 'draft',
     category_id: product?.category_id || null,
+    stock_quantity: product?.stock_quantity ?? null,
+    stock_status: product?.stock_status || 'in_stock',
+    low_stock_threshold: product?.low_stock_threshold || 5,
+    preorder_limit: product?.preorder_limit || null,
+    preorder_count: product?.preorder_count || 0,
+    preorder_available_date: product?.preorder_available_date || null,
   })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -264,6 +276,116 @@ export default function ProductForm({ product, categories, onClose, onSuccess }:
                 <option value="draft">Brouillon (non visible)</option>
                 <option value="active">Actif (visible sur le site)</option>
               </select>
+            </div>
+
+            {/* Gestion du stock */}
+            <div className="pt-6 border-t border-gold/30">
+              <h3 className="font-display text-lg text-leather mb-4">Gestion du stock</h3>
+              
+              {/* Type de gestion */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-leather mb-2">
+                  Type de gestion
+                </label>
+                <select
+                  value={formData.stock_status}
+                  onChange={(e) => setFormData(prev => ({ 
+                    ...prev, 
+                    stock_status: e.target.value as Product['stock_status']
+                  }))}
+                  className="w-full p-3 border border-gold/30 rounded-lg"
+                >
+                  <option value="in_stock">Stock normal</option>
+                  <option value="preorder">Précommande (édition limitée)</option>
+                </select>
+              </div>
+
+              {formData.stock_status === 'preorder' ? (
+                <>
+                  {/* Précommande */}
+                  <div className="p-4 bg-rose/10 border border-rose/30 rounded-lg space-y-4">
+                    <p className="text-sm text-leather font-medium">Mode précommande activé</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-leather mb-2">
+                          Limite de précommandes *
+                        </label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={formData.preorder_limit || ''}
+                          onChange={(e) => setFormData(prev => ({ 
+                            ...prev, 
+                            preorder_limit: e.target.value ? parseInt(e.target.value) : null
+                          }))}
+                          placeholder="50"
+                        />
+                        <p className="text-xs text-taupe mt-1">Nombre max de précommandes</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-leather mb-2">
+                          Disponible le
+                        </label>
+                        <Input
+                          type="date"
+                          value={formData.preorder_available_date?.split('T')[0] || ''}
+                          onChange={(e) => setFormData(prev => ({ 
+                            ...prev, 
+                            preorder_available_date: e.target.value ? new Date(e.target.value).toISOString() : null
+                          }))}
+                        />
+                        <p className="text-xs text-taupe mt-1">Date de livraison estimée</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-taupe">
+                      En mode précommande, les clients peuvent commander même si le produit n&apos;est pas encore disponible.
+                      Cela crée de l&apos;engouement et permet de tester la demande.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Stock normal */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-leather mb-2">
+                        Quantité en stock
+                      </label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={formData.stock_quantity ?? ''}
+                        onChange={(e) => setFormData(prev => ({ 
+                          ...prev, 
+                          stock_quantity: e.target.value ? parseInt(e.target.value) : null
+                        }))}
+                        placeholder="Illimité"
+                      />
+                      <p className="text-xs text-taupe mt-1">
+                        Laissez vide pour un stock illimité
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-leather mb-2">
+                        Seuil de stock bas
+                      </label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={formData.low_stock_threshold}
+                        onChange={(e) => setFormData(prev => ({ 
+                          ...prev, 
+                          low_stock_threshold: parseInt(e.target.value) || 5
+                        }))}
+                        placeholder="5"
+                      />
+                      <p className="text-xs text-taupe mt-1">
+                        Alerte stock bas à partir de ce nombre
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Boutons */}
