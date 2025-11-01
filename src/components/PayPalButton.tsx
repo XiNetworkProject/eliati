@@ -67,6 +67,7 @@ export default function PayPalButton({ amount, orderId, onSuccess, onError }: Pa
         clientId: clientId,
         currency: 'EUR',
         intent: 'capture',
+        components: 'buttons', // Seulement les boutons PayPal, pas les champs de carte
       }}
     >
       <PayPalButtons
@@ -74,7 +75,7 @@ export default function PayPalButton({ amount, orderId, onSuccess, onError }: Pa
           layout: 'vertical',
           color: 'gold',
           shape: 'rect',
-          label: 'pay',
+          label: 'paypal',
           height: 55,
         }}
         createOrder={(data, actions) => {
@@ -86,7 +87,8 @@ export default function PayPalButton({ amount, orderId, onSuccess, onError }: Pa
                   currency_code: 'EUR',
                   value: amount.toFixed(2),
                 },
-                description: `Commande EliAti - ${orderId.slice(0, 8)}`,
+                description: `Commande EliAti`,
+                custom_id: orderId.slice(0, 8),
               },
             ],
           })
