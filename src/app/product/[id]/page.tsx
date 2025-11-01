@@ -8,12 +8,13 @@ import Image from 'next/image'
 export default async function ProductPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params
   const { data: product } = await supabase
     .from('products')
     .select('*,product_images(url,alt),categories(name)')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!product) {
