@@ -109,16 +109,63 @@ export default async function ProductPage({
               )}
             </div>
 
-            <AddToCartButton
-              product={{
-                id: product.id,
-                name: product.name,
-                slug: product.slug,
-                price_cents: product.price_cents,
-                image: product.product_images?.[0]?.url,
-              }}
-              className="w-full"
-            />
+            {/* Gestion stock et précommande */}
+            {product.stock_status === 'out_of_stock' ? (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-center">
+                <p className="text-red-700 font-medium">Rupture de stock</p>
+                <p className="text-red-600 text-sm mt-1">Ce produit n&apos;est plus disponible pour le moment</p>
+              </div>
+            ) : product.stock_status === 'preorder' ? (
+              <>
+                <div className="p-4 bg-gold/10 border border-gold/30 rounded-xl mb-4">
+                  <p className="text-leather font-medium mb-1">📅 Précommande - Édition limitée</p>
+                  <p className="text-taupe text-sm">
+                    Plus que {(product.preorder_limit || 0) - (product.preorder_count || 0)} places disponibles sur {product.preorder_limit} !
+                  </p>
+                  {product.preorder_available_date && (
+                    <p className="text-taupe text-xs mt-2">
+                      Disponible le {new Date(product.preorder_available_date).toLocaleDateString('fr-FR')}
+                    </p>
+                  )}
+                </div>
+                {(product.preorder_count || 0) < (product.preorder_limit || 0) ? (
+                  <AddToCartButton
+                    product={{
+                      id: product.id,
+                      name: product.name,
+                      slug: product.slug,
+                      price_cents: product.price_cents,
+                      image: product.product_images?.[0]?.url,
+                    }}
+                    className="w-full"
+                  />
+                ) : (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-center">
+                    <p className="text-red-700 font-medium">Précommandes complètes</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {product.stock_quantity !== null && product.stock_quantity !== undefined && (
+                  <div className={`p-3 rounded-xl mb-3 ${product.stock_status === 'low_stock' ? 'bg-orange-50 border border-orange-200' : 'bg-green-50 border border-green-200'}`}>
+                    <p className={`text-sm font-medium ${product.stock_status === 'low_stock' ? 'text-orange-700' : 'text-green-700'}`}>
+                      {product.stock_status === 'low_stock' ? '⚠️ Plus que' : '✓'} {product.stock_quantity} en stock
+                    </p>
+                  </div>
+                )}
+                <AddToCartButton
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    slug: product.slug,
+                    price_cents: product.price_cents,
+                    image: product.product_images?.[0]?.url,
+                  }}
+                  className="w-full"
+                />
+              </>
+            )}
 
             <div className="border-t border-gold/30 pt-6 space-y-2 text-sm text-taupe">
               <p>✓ Livraison offerte dès 50€</p>

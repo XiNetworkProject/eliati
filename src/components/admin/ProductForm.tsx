@@ -14,12 +14,12 @@ type Product = {
   compare_at_cents: number | null
   status: 'active' | 'draft'
   category_id: string | null
-  stock_quantity: number | null
-  stock_status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'preorder'
-  low_stock_threshold: number
-  preorder_limit: number | null
-  preorder_count: number
-  preorder_available_date: string | null
+  stock_quantity?: number | null
+  stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'preorder'
+  low_stock_threshold?: number
+  preorder_limit?: number | null
+  preorder_count?: number
+  preorder_available_date?: string | null
 }
 
 type Category = {
