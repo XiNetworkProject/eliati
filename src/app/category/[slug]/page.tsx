@@ -7,12 +7,13 @@ import { supabase } from '@/lib/supabase'
 export default async function CategoryPage({
   params,
 }: {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }) {
+  const { slug } = await params
   const { data: cat } = await supabase
     .from('categories')
     .select('id,name,description')
-    .eq('slug', params.slug)
+    .eq('slug', slug)
     .single()
 
   const { data: products } = await supabase
