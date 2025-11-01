@@ -5,25 +5,25 @@ const items = [
   {
     slug: 'colliers',
     label: 'Colliers',
-    img: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=400&h=500&fit=crop&q=80',
+    img: '/cat/colliers.jpg',
     color: 'bg-champagne',
   },
   {
     slug: 'boucles',
     label: "Boucles d'oreille",
-    img: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&h=500&fit=crop&q=80',
+    img: '/cat/boucles.jpg',
     color: 'bg-rose',
   },
   {
     slug: 'bagues',
     label: 'Bagues',
-    img: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&h=500&fit=crop&q=80',
+    img: '/cat/bagues.jpg',
     color: 'bg-mauve',
   },
   {
     slug: 'bracelets',
     label: 'Bracelets',
-    img: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400&h=500&fit=crop&q=80',
+    img: '/cat/bracelets.jpg',
     color: 'bg-taupe',
   },
 ]
