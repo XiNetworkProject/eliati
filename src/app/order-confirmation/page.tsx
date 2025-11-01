@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Card } from '@/components/ui/card'
@@ -17,7 +17,7 @@ type Order = {
   created_at: string
 }
 
-export default function OrderConfirmationPage() {
+function OrderConfirmationContent() {
   const searchParams = useSearchParams()
   const orderId = searchParams.get('id')
   const [order, setOrder] = useState<Order | null>(null)
@@ -184,6 +184,23 @@ export default function OrderConfirmationPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function OrderConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-ivory via-champagne/10 to-rose/5">
+        <Header />
+        <main className="mx-auto max-w-4xl px-4 py-16 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-leather mx-auto mb-4"></div>
+          <p className="text-taupe">Chargement de votre commande...</p>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <OrderConfirmationContent />
+    </Suspense>
   )
 }
 
