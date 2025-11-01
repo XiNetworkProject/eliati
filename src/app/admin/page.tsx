@@ -498,13 +498,21 @@ function ProductsTab({
 }
 
 // Composant Gestion des commandes
+type ShippingAddress = {
+  address: string
+  addressComplement?: string
+  postalCode: string
+  city: string
+  country: string
+}
+
 function OrdersTab() {
   const [orders, setOrders] = useState<Array<{
     id: string
     customer_email: string
     customer_name: string | null
     customer_phone: string | null
-    shipping_address: any
+    shipping_address: ShippingAddress
     total_cents: number
     subtotal_cents: number
     discount_cents: number

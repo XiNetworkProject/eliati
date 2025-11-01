@@ -7,7 +7,7 @@ type PayPalButtonProps = {
   amount: number
   orderId: string
   onSuccess: (paypalOrderId: string) => void
-  onError: (error: any) => void
+  onError: (error: Error) => void
 }
 
 export default function PayPalButton({ amount, orderId, onSuccess, onError }: PayPalButtonProps) {
@@ -112,7 +112,7 @@ export default function PayPalButton({ amount, orderId, onSuccess, onError }: Pa
         }}
         onError={(err) => {
           console.error('Erreur PayPal:', err)
-          onError(err)
+          onError(new Error(typeof err === 'string' ? err : 'Erreur PayPal'))
         }}
       />
     </PayPalScriptProvider>

@@ -27,7 +27,7 @@ export default function OrderConfirmationPage() {
     const loadOrder = async () => {
       if (!orderId) return
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('orders')
         .select('id, customer_name, customer_email, total_cents, status, created_at')
         .eq('id', orderId)

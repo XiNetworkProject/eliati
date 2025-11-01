@@ -159,12 +159,12 @@ export default function CheckoutPage() {
     }
   }
 
-  const handlePayPalSuccess = (paypalOrderId: string) => {
+  const handlePayPalSuccess = () => {
     clearCart()
     router.push(`/order-confirmation?id=${orderId}`)
   }
 
-  const handlePayPalError = (error: any) => {
+  const handlePayPalError = (error: Error) => {
     console.error('Erreur PayPal:', error)
     alert('Erreur lors du paiement PayPal. Veuillez réessayer.')
   }
