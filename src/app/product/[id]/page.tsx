@@ -1,7 +1,7 @@
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { supabase } from '@/lib/supabase'
-import { Button } from '@/components/ui/button'
+import AddToCartButton from '@/components/AddToCartButton'
 import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
 
@@ -108,9 +108,16 @@ export default async function ProductPage({
               )}
             </div>
 
-            <Button className="w-full bg-leather text-ivory hover:bg-leather/90">
-              Ajouter au panier
-            </Button>
+            <AddToCartButton
+              product={{
+                id: product.id,
+                name: product.name,
+                slug: product.slug,
+                price_cents: product.price_cents,
+                image: product.product_images?.[0]?.url,
+              }}
+              className="w-full"
+            />
 
             <div className="border-t border-gold/30 pt-6 space-y-2 text-sm text-taupe">
               <p>✓ Livraison offerte dès 50€</p>

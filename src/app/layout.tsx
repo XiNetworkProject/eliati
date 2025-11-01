@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@/app/globals.css";
 import { cormorant, inter, allura } from "./fonts";
 import { cn } from "@/lib/utils";
+import { CartProvider } from "@/contexts/CartContext";
 
 export const metadata: Metadata = {
   title: "EliAti – Bijoux",
@@ -23,7 +24,9 @@ export default function RootLayout({
           "bg-ivory text-leather antialiased"
         )}
       >
-        {children}
+        <CartProvider>
+          {children}
+        </CartProvider>
       </body>
     </html>
   );
