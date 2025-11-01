@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import PayPalButton from '@/components/PayPalButton'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
@@ -48,7 +49,8 @@ export default function CheckoutPage() {
   
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutForm, string>>>({})
   const [loading, setLoading] = useState(false)
-  const [paypalLoaded, setPaypalLoaded] = useState(false)
+  const [orderId, setOrderId] = useState<string | null>(null)
+  const [orderCreated, setOrderCreated] = useState(false)
 
   // Rediriger si panier vide
   if (items.length === 0) {
@@ -94,7 +96,7 @@ export default function CheckoutPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handlePayPalPayment = async () => {
+  const createOrder = async () => {
     if (!validateForm()) {
       alert('Veuillez remplir tous les champs requis')
       return
@@ -119,7 +121,8 @@ export default function CheckoutPage() {
           },
           subtotal_cents: Math.round(subtotal * 100),
           discount_cents: Math.round(discount * 100),
-          total_cents: Math.round(total * 100),
+          shipping_cents: 500, // 5€ de frais de port
+          total_cents: Math.round((total + 5) * 100),
           status: 'pending',
           notes: formData.notes,
         })
@@ -143,20 +146,27 @@ export default function CheckoutPage() {
 
       if (itemsError) throw itemsError
 
-      // Initialiser PayPal (simulation pour l'instant)
-      // TODO: Intégrer le vrai SDK PayPal
-      alert('🎉 Commande créée ! Intégration PayPal en cours de développement.')
-      
-      // Vider le panier et rediriger
-      clearCart()
-      router.push(`/order-confirmation?id=${order.id}`)
+      setOrderId(order.id)
+      setOrderCreated(true)
+      return order.id
 
     } catch (error) {
       console.error('Erreur lors de la création de la commande:', error)
       alert('Erreur lors de la création de la commande. Veuillez réessayer.')
+      return null
     } finally {
       setLoading(false)
     }
+  }
+
+  const handlePayPalSuccess = (paypalOrderId: string) => {
+    clearCart()
+    router.push(`/order-confirmation?id=${orderId}`)
+  }
+
+  const handlePayPalError = (error: any) => {
+    console.error('Erreur PayPal:', error)
+    alert('Erreur lors du paiement PayPal. Veuillez réessayer.')
   }
 
   return (
@@ -385,32 +395,53 @@ export default function CheckoutPage() {
                     <span className="font-display text-3xl text-leather">{(total + 5).toFixed(2)} €</span>
                   </div>
 
-                  {/* Bouton PayPal */}
-                  <Button
-                    onClick={handlePayPalPayment}
-                    disabled={loading}
-                    className="w-full bg-gradient-to-r from-[#0070ba] to-[#003087] text-white hover:from-[#005ea6] hover:to-[#00264d] h-14 text-base font-semibold shadow-lg"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                        Traitement en cours...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M20.067 8.478c.492.88.556 2.014.3 3.327-.74 3.806-3.276 5.12-6.514 5.12h-.5a.805.805 0 00-.794.68l-.04.22-.63 3.993-.028.15a.806.806 0 01-.795.68H8.803c-.397 0-.687-.356-.593-.736l1.864-11.808a.959.959 0 01.946-.814h2.743c4.037 0 6.778 1.564 7.304 4.188z" />
-                        </svg>
-                        Payer avec PayPal
-                      </>
-                    )}
-                  </Button>
+                  {/* Bouton créer la commande */}
+                  {!orderCreated ? (
+                    <Button
+                      onClick={createOrder}
+                      disabled={loading}
+                      className="w-full bg-leather text-ivory hover:bg-leather/90 h-14 text-base font-semibold shadow-lg"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                          Création de la commande...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Valider et passer au paiement
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <>
+                      {/* Boutons PayPal */}
+                      <div className="space-y-4">
+                        <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-center">
+                          <p className="text-sm text-green-700 font-medium">✓ Commande créée avec succès</p>
+                          <p className="text-xs text-green-600 mt-1">Procédez au paiement ci-dessous</p>
+                        </div>
+                        
+                        {orderId && (
+                          <PayPalButton
+                            amount={total + 5}
+                            orderId={orderId}
+                            onSuccess={handlePayPalSuccess}
+                            onError={handlePayPalError}
+                          />
+                        )}
+                      </div>
+                    </>
+                  )}
 
                   <div className="mt-4 flex items-center justify-center gap-2 text-xs text-taupe">
                     <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                    <span>Paiement 100% sécurisé</span>
+                    <span>Paiement 100% sécurisé via PayPal</span>
                   </div>
                 </div>
               </div>
