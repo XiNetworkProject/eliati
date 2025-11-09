@@ -38,6 +38,13 @@ type Category = {
   image_url: string | null
 }
 
+const SHIPPING_METHODS: Record<string, { label: string; description?: string; delay?: string }> = {
+  colissimo: {
+    label: 'Colissimo Suivi',
+    description: 'Livraison à domicile avec suivi et assurance incluse',
+    delay: '48h ouvrées',
+  },
+}
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
@@ -152,8 +159,8 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-ivory via-champagne/10 to-rose/5">
       {/* Header Admin */}
       <header className="backdrop-blur-sm bg-white/80 border-b border-gold/20 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="relative">
               <Image 
                 src="/logoeliatitransparent.png" 
@@ -167,14 +174,14 @@ export default function AdminDashboard() {
             <div className="h-6 w-px bg-gold/30" />
             <h1 className="font-display text-xl text-leather tracking-tight">Administration</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-gold/20 to-gold/10 border border-gold/30">
+          <div className="flex items-center gap-3 flex-wrap w-full sm:w-auto">
+            <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-gold/20 to-gold/10 border border-gold/30 mx-auto sm:mx-0">
               <span className="text-xs font-medium text-leather tracking-wide">ADMIN</span>
             </div>
             <Button 
               variant="outline" 
               size="sm"
-              className="border-leather/20 text-leather hover:bg-leather hover:text-ivory transition-all"
+              className="border-leather/20 text-leather hover:bg-leather hover:text-ivory transition-all w-full sm:w-auto"
               onClick={() => window.open('/', '_blank')}
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,15 +193,15 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Navigation par onglets */}
         <div className="mb-8">
-          <nav className="flex space-x-1 bg-white/60 backdrop-blur-sm p-1.5 rounded-xl border border-gold/20 shadow-sm">
+          <nav className="flex flex-wrap sm:flex-nowrap gap-2 overflow-x-auto bg-white/60 backdrop-blur-sm p-1.5 rounded-xl border border-gold/20 shadow-sm">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`flex-1 min-w-[140px] sm:min-w-0 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
                   activeTab === tab.id
                     ? 'bg-leather text-ivory shadow-md'
                     : 'text-taupe hover:text-leather hover:bg-white/60'
@@ -393,10 +400,10 @@ function ProductsTab({
 }) {
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <h2 className="font-display text-2xl text-leather">Gestion des produits</h2>
         <Button 
-          className="bg-leather text-ivory hover:bg-leather/90"
+          className="bg-leather text-ivory hover:bg-leather/90 w-full sm:w-auto"
           onClick={() => onEdit({} as Product)}
         >
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -410,9 +417,9 @@ function ProductsTab({
       <div className="grid gap-4">
         {products.map((product) => (
           <Card key={product.id} className="group overflow-hidden bg-white/80 backdrop-blur-sm border-gold/20 hover:shadow-md transition-all duration-200">
-            <div className="p-5 flex items-center justify-between">
-              <div className="flex items-center gap-5">
-                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-champagne/40 to-champagne/20 border border-gold/30 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div className="p-5 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5 text-center sm:text-left">
+                <div className="w-16 h-16 mx-auto sm:mx-0 rounded-xl bg-gradient-to-br from-champagne/40 to-champagne/20 border border-gold/30 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gold/40 to-gold/20" />
                 </div>
                 <div>
@@ -425,7 +432,7 @@ function ProductsTab({
                       </span>
                     )}
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                     <span 
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
                         product.status === 'active' 
@@ -443,11 +450,11 @@ function ProductsTab({
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-leather/20 hover:bg-leather hover:text-ivory transition-all"
+                  className="border-leather/20 hover:bg-leather hover:text-ivory transition-all w-full sm:w-auto"
                   onClick={() => onManageImages(product)}
                 >
                   <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -458,7 +465,7 @@ function ProductsTab({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-leather/20 hover:bg-leather hover:text-ivory transition-all"
+                  className="border-leather/20 hover:bg-leather hover:text-ivory transition-all w-full sm:w-auto"
                   onClick={() => onEdit(product)}
                 >
                   <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -469,7 +476,7 @@ function ProductsTab({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all"
+                  className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all w-full sm:w-auto"
                   onClick={() => onDelete(product.id)}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -498,12 +505,21 @@ function ProductsTab({
 }
 
 // Composant Gestion des commandes
+type ShippingMethodDetails = {
+  id: string
+  label: string
+  price?: number
+  delay?: string
+  description?: string
+}
+
 type ShippingAddress = {
   address: string
   addressComplement?: string
   postalCode: string
   city: string
   country: string
+  method?: ShippingMethodDetails
 }
 
 function OrdersTab() {
@@ -518,6 +534,7 @@ function OrdersTab() {
     discount_cents: number
     shipping_cents: number
     status: string
+    shipping_method?: string | null
     paypal_order_id: string | null
     notes: string | null
     created_at: string
@@ -580,9 +597,9 @@ function OrdersTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="font-display text-2xl text-leather">Commandes clients</h2>
-        <Button onClick={loadOrders} variant="outline" className="border-leather/20">
+        <Button onClick={loadOrders} variant="outline" className="border-leather/20 w-full sm:w-auto">
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
@@ -610,7 +627,7 @@ function OrdersTab() {
           {orders.map((order) => (
             <Card key={order.id} className="overflow-hidden bg-white/80 backdrop-blur-sm border-gold/20 hover:shadow-lg transition-all">
               <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="font-display text-lg text-leather">{order.customer_name}</h3>
@@ -622,7 +639,7 @@ function OrdersTab() {
                       Commande #{order.id.slice(0, 8)} • {new Date(order.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-left lg:text-right">
                     <p className="font-display text-2xl text-leather mb-1">{(order.total_cents / 100).toFixed(2)} €</p>
                     <p className="text-xs text-taupe">
                       {order.paypal_order_id && (
@@ -634,8 +651,8 @@ function OrdersTab() {
 
                 {/* Adresse */}
                 {order.shipping_address && (
-                  <div className="p-3 bg-champagne/10 rounded-lg mb-4">
-                    <p className="text-xs uppercase tracking-wide text-taupe mb-1">Adresse de livraison</p>
+                  <div className="p-3 bg-champagne/10 rounded-lg mb-4 space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-taupe">Adresse de livraison</p>
                     <p className="text-sm text-leather">
                       {order.shipping_address.address}
                       {order.shipping_address.addressComplement && `, ${order.shipping_address.addressComplement}`}
@@ -643,6 +660,24 @@ function OrdersTab() {
                     <p className="text-sm text-leather">
                       {order.shipping_address.postalCode} {order.shipping_address.city}, {order.shipping_address.country}
                     </p>
+                    {(order.shipping_address.method || order.shipping_method) && (
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-gold/30 bg-white/70 p-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-taupe">Mode d&apos;envoi</p>
+                          <p className="text-sm font-medium text-leather">
+                            {order.shipping_address.method?.label || SHIPPING_METHODS[order.shipping_method ?? '']?.label || 'Colissimo'}
+                          </p>
+                        </div>
+                        <div className="text-xs text-taupe sm:text-right">
+                          <p>
+                            {(order.shipping_cents / 100).toFixed(2)} €
+                          </p>
+                          <p>
+                            {order.shipping_address.method?.delay || SHIPPING_METHODS[order.shipping_method ?? '']?.delay || '48h ouvrées'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -655,8 +690,8 @@ function OrdersTab() {
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-gold/20">
-                  <div className="flex gap-2">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-gold/20">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       size="sm"
                       variant="outline"
@@ -669,18 +704,18 @@ function OrdersTab() {
                           loadOrderItems(order.id)
                         }
                       }}
-                      className="border-leather/20"
+                      className="border-leather/20 w-full sm:w-auto"
                     >
                       {selectedOrder === order.id ? 'Masquer' : 'Voir'} les articles
                     </Button>
                   </div>
                   
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     {order.status === 'paid' && (
                       <Button
                         size="sm"
                         onClick={() => updateOrderStatus(order.id, 'shipped')}
-                        className="bg-blue-600 text-white hover:bg-blue-700"
+                        className="bg-blue-600 text-white hover:bg-blue-700 w-full sm:w-auto"
                       >
                         Marquer comme expédiée
                       </Button>
@@ -689,7 +724,7 @@ function OrdersTab() {
                       <Button
                         size="sm"
                         onClick={() => updateOrderStatus(order.id, 'delivered')}
-                        className="bg-purple-600 text-white hover:bg-purple-700"
+                        className="bg-purple-600 text-white hover:bg-purple-700 w-full sm:w-auto"
                       >
                         Marquer comme livrée
                       </Button>
@@ -699,7 +734,7 @@ function OrdersTab() {
                         size="sm"
                         variant="outline"
                         onClick={() => updateOrderStatus(order.id, 'cancelled')}
-                        className="border-red-300 text-red-600 hover:bg-red-50"
+                        className="border-red-300 text-red-600 hover:bg-red-50 w-full sm:w-auto"
                       >
                         Annuler
                       </Button>

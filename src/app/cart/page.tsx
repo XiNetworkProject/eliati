@@ -9,6 +9,12 @@ import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
+const SHIPPING_INFO = {
+  label: 'Colissimo Suivi',
+  price: 6.9,
+  description: 'Livraison à domicile avec suivi (48h ouvrées)',
+}
+
 export default function CartPage() {
   const {
     items,
@@ -225,9 +231,13 @@ export default function CartPage() {
                       <span className="text-green-700 font-bold text-lg">-{discount.toFixed(2)} €</span>
                     </div>
                   )}
-                  <div className="flex justify-between items-center text-sm">
+                  <div className="flex justify-between items-start text-sm">
                     <span className="text-taupe">Livraison</span>
-                    <span className="text-taupe italic">Calculée à l&apos;étape suivante</span>
+                    <span className="text-right text-taupe">
+                      {SHIPPING_INFO.label}
+                      <span className="block text-leather font-medium text-base">{SHIPPING_INFO.price.toFixed(2)} €</span>
+                      <span className="block text-xs italic">{SHIPPING_INFO.description}</span>
+                    </span>
                   </div>
                 </div>
 

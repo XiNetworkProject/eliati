@@ -12,9 +12,24 @@ type Order = {
   id: string
   customer_name: string
   customer_email: string
+  shipping_method: string | null
+  shipping_cents: number
   total_cents: number
   status: string
   created_at: string
+  shipping_address: {
+    address: string
+    addressComplement?: string
+    city: string
+    postalCode: string
+    country: string
+    method?: {
+      id: string
+      label: string
+      price?: number
+      delay?: string
+    }
+  }
 }
 
 function OrderConfirmationContent() {
@@ -29,7 +44,7 @@ function OrderConfirmationContent() {
 
       const { data } = await supabase
         .from('orders')
-        .select('id, customer_name, customer_email, total_cents, status, created_at')
+        .select('id, customer_name, customer_email, total_cents, status, created_at, shipping_method, shipping_cents, shipping_address')
         .eq('id', orderId)
         .single()
 
@@ -121,6 +136,29 @@ function OrderConfirmationContent() {
               <div className="p-4 bg-champagne/10 rounded-xl border border-gold/20">
                 <p className="text-xs uppercase tracking-wider text-taupe mb-2">Montant total</p>
                 <p className="font-display text-2xl text-leather">{(order.total_cents / 100).toFixed(2)} €</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="p-5 rounded-2xl border border-gold/20 bg-white/70">
+                <p className="text-xs uppercase tracking-wide text-taupe mb-2">Adresse de livraison</p>
+                <p className="text-sm text-leather">
+                  {order.shipping_address.address}
+                  {order.shipping_address.addressComplement && `, ${order.shipping_address.addressComplement}`}
+                </p>
+                <p className="text-sm text-leather">
+                  {order.shipping_address.postalCode} {order.shipping_address.city}, {order.shipping_address.country}
+                </p>
+              </div>
+
+              <div className="p-5 rounded-2xl border border-gold/20 bg-white/70">
+                <p className="text-xs uppercase tracking-wide text-taupe mb-2">Mode d&apos;envoi</p>
+                <p className="text-sm font-medium text-leather">
+                  {order.shipping_address.method?.label || 'Colissimo Suivi'}
+                </p>
+                <p className="text-xs text-taupe mt-1">
+                  {(order.shipping_cents / 100).toFixed(2)} € • {order.shipping_address.method?.delay || '48h ouvrées'}
+                </p>
               </div>
             </div>
 

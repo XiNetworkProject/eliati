@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
 import { supabase } from '@/lib/supabase'
@@ -11,6 +11,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
+import { cn } from '@/lib/utils'
 
 type CheckoutForm = {
   // Informations personnelles
@@ -29,6 +30,26 @@ type CheckoutForm = {
   // Notes
   notes: string
 }
+
+type ShippingOption = {
+  id: string
+  label: string
+  description: string
+  delay: string
+  price: number
+  insurance?: string
+}
+
+const SHIPPING_OPTIONS: ShippingOption[] = [
+  {
+    id: 'colissimo',
+    label: 'Colissimo Suivi',
+    description: 'Livraison à domicile avec suivi et assurance incluse.',
+    delay: '48h ouvrées',
+    price: 6.9,
+    insurance: "Assurance incluse jusqu'à 200 €",
+  },
+]
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -51,6 +72,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [orderId, setOrderId] = useState<string | null>(null)
   const [orderCreated, setOrderCreated] = useState(false)
+  const [shippingOption, setShippingOption] = useState<ShippingOption>(SHIPPING_OPTIONS[0])
 
   // Rediriger si panier vide
   if (items.length === 0) {
@@ -106,6 +128,8 @@ export default function CheckoutPage() {
 
     try {
       // Créer la commande dans Supabase
+      const shippingAmountCents = Math.round(shippingOption.price * 100)
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -118,11 +142,18 @@ export default function CheckoutPage() {
             city: formData.city,
             postalCode: formData.postalCode,
             country: formData.country,
+            method: {
+              id: shippingOption.id,
+              label: shippingOption.label,
+              price: shippingOption.price,
+              delay: shippingOption.delay,
+            },
           },
           subtotal_cents: Math.round(subtotal * 100),
           discount_cents: Math.round(discount * 100),
-          shipping_cents: 500, // 5€ de frais de port
-          total_cents: Math.round((total + 5) * 100),
+          shipping_cents: shippingAmountCents,
+          shipping_method: shippingOption.id,
+          total_cents: Math.round((total + shippingOption.price) * 100),
           status: 'pending',
           notes: formData.notes,
         })
@@ -168,6 +199,9 @@ export default function CheckoutPage() {
     console.error('Erreur PayPal:', error)
     alert('Erreur lors du paiement PayPal. Veuillez réessayer.')
   }
+
+  const shippingCost = shippingOption.price
+  const finalTotal = useMemo(() => Math.max(0, total + shippingCost), [total, shippingCost])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-ivory via-champagne/10 to-rose/5">
@@ -324,6 +358,51 @@ export default function CheckoutPage() {
                 placeholder="Instructions spéciales, préférences de livraison..."
               />
             </Card>
+
+            {/* Mode d'expédition */}
+            <Card className="p-8 bg-white/90 backdrop-blur-sm border-gold/20">
+              <h2 className="font-display text-2xl text-leather mb-6">Mode d&apos;envoi</h2>
+              <div className="grid gap-4">
+                {SHIPPING_OPTIONS.map((option) => {
+                  const selected = option.id === shippingOption.id
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setShippingOption(option)}
+                      className={cn(
+                        'w-full text-left p-5 rounded-2xl border transition-all duration-200 flex items-start gap-4',
+                        selected
+                          ? 'border-leather bg-gradient-to-br from-champagne/30 to-rose/20 shadow-lg'
+                          : 'border-gold/30 bg-white hover:border-leather/40 hover:shadow-md'
+                      )}
+                    >
+                      <div className={cn(
+                        'mt-1 h-4 w-4 rounded-full border-2',
+                        selected ? 'border-leather bg-leather' : 'border-gold/40'
+                      )} />
+                      <div className="flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <div>
+                            <p className="font-display text-lg text-leather">{option.label}</p>
+                            <p className="text-sm text-taupe">{option.description}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-leather font-semibold text-lg">{option.price.toFixed(2)} €</p>
+                            <p className="text-xs text-taupe">{option.delay}</p>
+                          </div>
+                        </div>
+                        {option.insurance && (
+                          <p className="mt-3 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2 inline-block">
+                            {option.insurance}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </Card>
           </div>
 
           {/* Résumé de commande */}
@@ -384,7 +463,9 @@ export default function CheckoutPage() {
                   )}
                   <div className="flex justify-between text-sm">
                     <span className="text-taupe">Livraison</span>
-                    <span className="text-leather font-medium">5,00 €</span>
+                    <span className="text-leather font-medium">
+                      {shippingOption.label} · {shippingCost.toFixed(2)} €
+                    </span>
                   </div>
                 </div>
 
@@ -392,7 +473,7 @@ export default function CheckoutPage() {
                 <div className="pt-4 border-t-2 border-gold/30">
                   <div className="flex justify-between items-center mb-6">
                     <span className="font-display text-xl text-leather">Total</span>
-                    <span className="font-display text-3xl text-leather">{(total + 5).toFixed(2)} €</span>
+                    <span className="font-display text-3xl text-leather">{finalTotal.toFixed(2)} €</span>
                   </div>
 
                   {/* Bouton créer la commande */}
@@ -427,7 +508,7 @@ export default function CheckoutPage() {
                         
                         {orderId && (
                           <PayPalButton
-                            amount={total + 5}
+                            amount={finalTotal}
                             orderId={orderId}
                             onSuccess={handlePayPalSuccess}
                             onError={handlePayPalError}
