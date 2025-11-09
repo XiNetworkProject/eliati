@@ -8,9 +8,9 @@ export const metadata: Metadata = {
   title: "EliAti – Bijoux",
   description: "Bijoux faits main – colliers, boucles, bagues, bracelets.",
   icons: {
-    icon: "/logoeliati.png",
-    apple: "/logoeliati.png",
-    shortcut: "/logoeliati.png",
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
+    shortcut: "/favicon.svg",
   },
 };
 
