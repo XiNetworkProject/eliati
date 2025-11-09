@@ -511,6 +511,14 @@ type ShippingMethodDetails = {
   price?: number
   delay?: string
   description?: string
+  pricing?: {
+    base?: number | null
+    reduced?: number | null
+    reducedAbove?: number | null
+    freeAbove?: number | null
+    extraItemThreshold?: number | null
+    extraItemFee?: number | null
+  }
 }
 
 type ShippingAddress = {
@@ -660,25 +668,33 @@ function OrdersTab() {
                     <p className="text-sm text-leather">
                       {order.shipping_address.postalCode} {order.shipping_address.city}, {order.shipping_address.country}
                     </p>
-                    {(order.shipping_address.method || order.shipping_method) && (
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-gold/30 bg-white/70 p-3">
-                        <div>
-                          <p className="text-xs uppercase tracking-wide text-taupe">Mode d&apos;envoi</p>
-                          <p className="text-sm font-medium text-leather">
-                            {order.shipping_address.method?.label || SHIPPING_METHODS[order.shipping_method ?? '']?.label || 'Colissimo'}
-                          </p>
-                        </div>
-                        <div className="text-xs text-taupe sm:text-right">
-                          <p>
-                            {(order.shipping_cents / 100).toFixed(2)} €
-                          </p>
-                          <p>
-                            {order.shipping_address.method?.delay || SHIPPING_METHODS[order.shipping_method ?? '']?.delay || '48h ouvrées'}
-                          </p>
-                        </div>
+                  {(order.shipping_address.method || order.shipping_method) && (
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-gold/30 bg-white/70 p-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-taupe">Mode d&apos;envoi</p>
+                        <p className="text-sm font-medium text-leather">
+                          {order.shipping_address.method?.label || SHIPPING_METHODS[order.shipping_method ?? '']?.label || 'Colissimo'}
+                        </p>
+                        {order.shipping_address.method?.pricing?.freeAbove && (
+                          <p className="text-xs text-green-700 mt-1">Livraison offerte dès {order.shipping_address.method?.pricing?.freeAbove?.toFixed(0)} €</p>
+                        )}
                       </div>
-                    )}
-                  </div>
+                      <div className="text-xs text-taupe sm:text-right">
+                        <p>
+                          {(order.shipping_cents / 100).toFixed(2)} €
+                        </p>
+                        <p>
+                          {order.shipping_address.method?.delay || SHIPPING_METHODS[order.shipping_method ?? '']?.delay || '48h ouvrées'}
+                        </p>
+                        {order.shipping_address.method?.pricing?.extraItemThreshold !== undefined && (
+                          <p className="mt-1">
+                            +{(order.shipping_address.method?.pricing?.extraItemFee ?? 0).toFixed(2)} € / article au-delà de {order.shipping_address.method?.pricing?.extraItemThreshold}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 )}
 
                 {/* Notes */}

@@ -28,6 +28,9 @@ type Order = {
       label: string
       price?: number
       delay?: string
+      pricing?: {
+        freeAbove?: number
+      }
     }
   }
 }
@@ -151,7 +154,7 @@ function OrderConfirmationContent() {
                 </p>
               </div>
 
-              <div className="p-5 rounded-2xl border border-gold/20 bg-white/70">
+              <div className="p-5 rounded-2xl border border-gold/20 bg-white/70 space-y-1">
                 <p className="text-xs uppercase tracking-wide text-taupe mb-2">Mode d&apos;envoi</p>
                 <p className="text-sm font-medium text-leather">
                   {order.shipping_address.method?.label || 'Colissimo Suivi'}
@@ -159,6 +162,11 @@ function OrderConfirmationContent() {
                 <p className="text-xs text-taupe mt-1">
                   {(order.shipping_cents / 100).toFixed(2)} € • {order.shipping_address.method?.delay || '48h ouvrées'}
                 </p>
+                {order.shipping_address.method?.pricing?.freeAbove && (
+                  <p className="text-xs text-green-700">
+                    Livraison offerte dès {order.shipping_address.method.pricing.freeAbove.toFixed(0)} €
+                  </p>
+                )}
               </div>
             </div>
 

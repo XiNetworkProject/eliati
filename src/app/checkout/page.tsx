@@ -36,8 +36,13 @@ type ShippingOption = {
   label: string
   description: string
   delay: string
-  price: number
+  basePrice: number
   insurance?: string
+  reducedPrice?: number
+  reducedAbove?: number
+  freeAbove?: number
+  extraItemThreshold?: number
+  extraItemFee?: number
 }
 
 const SHIPPING_OPTIONS: ShippingOption[] = [
@@ -46,10 +51,46 @@ const SHIPPING_OPTIONS: ShippingOption[] = [
     label: 'Colissimo Suivi',
     description: 'Livraison à domicile avec suivi et assurance incluse.',
     delay: '48h ouvrées',
-    price: 6.9,
+    basePrice: 6.9,
+    reducedPrice: 3.9,
+    reducedAbove: 60,
+    freeAbove: 120,
+    extraItemThreshold: 4,
+    extraItemFee: 1.5,
     insurance: "Assurance incluse jusqu'à 200 €",
   },
 ]
+
+function calculateShippingPrice(option: ShippingOption, subtotal: number, itemCount: number) {
+  if (!option) return 0
+
+  // Livraison offerte au-delà d'un certain montant
+  if (option.freeAbove !== undefined && subtotal >= option.freeAbove) {
+    return 0
+  }
+
+  // Tarif réduit à partir d'un seuil
+  if (
+    option.reducedAbove !== undefined &&
+    option.reducedPrice !== undefined &&
+    subtotal >= option.reducedAbove
+  ) {
+    return option.reducedPrice
+  }
+
+  let price = option.basePrice
+
+  // Surcharge si beaucoup d'articles (ex: bijoux volumineux à emballer séparément)
+  if (
+    option.extraItemThreshold !== undefined &&
+    option.extraItemFee !== undefined &&
+    itemCount > option.extraItemThreshold
+  ) {
+    price += (itemCount - option.extraItemThreshold) * option.extraItemFee
+  }
+
+  return Number(price.toFixed(2))
+}
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -73,6 +114,13 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState<string | null>(null)
   const [orderCreated, setOrderCreated] = useState(false)
   const [shippingOption, setShippingOption] = useState<ShippingOption>(SHIPPING_OPTIONS[0])
+
+  const itemCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items])
+
+  const shippingCost = useMemo(
+    () => calculateShippingPrice(shippingOption, total, itemCount),
+    [shippingOption, total, itemCount]
+  )
 
   // Rediriger si panier vide
   if (items.length === 0) {
@@ -128,7 +176,7 @@ export default function CheckoutPage() {
 
     try {
       // Créer la commande dans Supabase
-      const shippingAmountCents = Math.round(shippingOption.price * 100)
+      const shippingAmountCents = Math.round(shippingCost * 100)
 
       const { data: order, error: orderError } = await supabase
         .from('orders')
@@ -145,15 +193,25 @@ export default function CheckoutPage() {
             method: {
               id: shippingOption.id,
               label: shippingOption.label,
-              price: shippingOption.price,
+              price: shippingCost,
               delay: shippingOption.delay,
+              pricing: {
+                base: shippingOption.basePrice,
+                reduced: shippingOption.reducedPrice ?? null,
+                reducedAbove: shippingOption.reducedAbove ?? null,
+                freeAbove: shippingOption.freeAbove ?? null,
+                extraItemThreshold: shippingOption.extraItemThreshold ?? null,
+                extraItemFee: shippingOption.extraItemFee ?? null,
+                cartValue: total,
+                itemCount,
+              },
             },
           },
           subtotal_cents: Math.round(subtotal * 100),
           discount_cents: Math.round(discount * 100),
           shipping_cents: shippingAmountCents,
           shipping_method: shippingOption.id,
-          total_cents: Math.round((total + shippingOption.price) * 100),
+          total_cents: Math.round((total + shippingCost) * 100),
           status: 'pending',
           notes: formData.notes,
         })
@@ -200,7 +258,6 @@ export default function CheckoutPage() {
     alert('Erreur lors du paiement PayPal. Veuillez réessayer.')
   }
 
-  const shippingCost = shippingOption.price
   const finalTotal = useMemo(() => Math.max(0, total + shippingCost), [total, shippingCost])
 
   return (
@@ -365,6 +422,7 @@ export default function CheckoutPage() {
               <div className="grid gap-4">
                 {SHIPPING_OPTIONS.map((option) => {
                   const selected = option.id === shippingOption.id
+                  const computedPrice = calculateShippingPrice(option, total, itemCount)
                   return (
                     <button
                       key={option.id}
@@ -386,12 +444,24 @@ export default function CheckoutPage() {
                           <div>
                             <p className="font-display text-lg text-leather">{option.label}</p>
                             <p className="text-sm text-taupe">{option.description}</p>
+                            <p className="mt-2 text-xs text-taupe/80">
+                              {option.freeAbove !== undefined && option.reducedPrice !== undefined ? (
+                                <>Offerte dès {option.freeAbove.toFixed(0)} € • {option.reducedPrice.toFixed(2)} € entre {option.reducedAbove?.toFixed(0)} € et {option.freeAbove.toFixed(0)} €</>
+                              ) : option.freeAbove !== undefined ? (
+                                <>Offerte dès {option.freeAbove.toFixed(0)} €</>
+                              ) : null}
+                            </p>
                           </div>
                           <div className="text-right">
-                            <p className="text-leather font-semibold text-lg">{option.price.toFixed(2)} €</p>
+                            <p className="text-leather font-semibold text-lg">{computedPrice.toFixed(2)} €</p>
                             <p className="text-xs text-taupe">{option.delay}</p>
                           </div>
                         </div>
+                        {option.extraItemThreshold !== undefined && option.extraItemFee !== undefined && (
+                          <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 inline-block">
+                            Supplément de {option.extraItemFee.toFixed(2)} € par article au-delà de {option.extraItemThreshold}
+                          </p>
+                        )}
                         {option.insurance && (
                           <p className="mt-3 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2 inline-block">
                             {option.insurance}

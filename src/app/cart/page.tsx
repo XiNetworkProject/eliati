@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useMemo } from 'react'
 import { useCart } from '@/contexts/CartContext'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -9,10 +10,31 @@ import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
-const SHIPPING_INFO = {
+const COLISSIMO_CONFIG = {
   label: 'Colissimo Suivi',
-  price: 6.9,
+  basePrice: 6.9,
+  reducedPrice: 3.9,
+  reducedAbove: 60,
+  freeAbove: 120,
+  extraItemThreshold: 4,
+  extraItemFee: 1.5,
   description: 'Livraison à domicile avec suivi (48h ouvrées)',
+}
+
+function estimateCartShipping(subtotal: number, itemCount: number) {
+  if (subtotal >= COLISSIMO_CONFIG.freeAbove) return 0
+  if (COLISSIMO_CONFIG.reducedAbove && COLISSIMO_CONFIG.reducedPrice !== undefined && subtotal >= COLISSIMO_CONFIG.reducedAbove) {
+    return COLISSIMO_CONFIG.reducedPrice
+  }
+  let price = COLISSIMO_CONFIG.basePrice
+  if (
+    COLISSIMO_CONFIG.extraItemThreshold !== undefined &&
+    COLISSIMO_CONFIG.extraItemFee !== undefined &&
+    itemCount > COLISSIMO_CONFIG.extraItemThreshold
+  ) {
+    price += (itemCount - COLISSIMO_CONFIG.extraItemThreshold) * COLISSIMO_CONFIG.extraItemFee
+  }
+  return Number(price.toFixed(2))
 }
 
 export default function CartPage() {
@@ -31,6 +53,9 @@ export default function CartPage() {
   const [promoCodeInput, setPromoCodeInput] = useState('')
   const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [loadingPromo, setLoadingPromo] = useState(false)
+
+  const itemCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items])
+  const estimatedShipping = useMemo(() => estimateCartShipping(subtotal, itemCount), [subtotal, itemCount])
 
   const handleApplyPromo = async () => {
     if (!promoCodeInput.trim()) return
@@ -234,9 +259,14 @@ export default function CartPage() {
                   <div className="flex justify-between items-start text-sm">
                     <span className="text-taupe">Livraison</span>
                     <span className="text-right text-taupe">
-                      {SHIPPING_INFO.label}
-                      <span className="block text-leather font-medium text-base">{SHIPPING_INFO.price.toFixed(2)} €</span>
-                      <span className="block text-xs italic">{SHIPPING_INFO.description}</span>
+                      {COLISSIMO_CONFIG.label}
+                      <span className="block text-leather font-medium text-base">{estimatedShipping.toFixed(2)} €</span>
+                      <span className="block text-xs italic">{COLISSIMO_CONFIG.description}</span>
+                      {COLISSIMO_CONFIG.freeAbove && (
+                        <span className="block text-xs text-green-700 mt-1">
+                          Livraison offerte dès {COLISSIMO_CONFIG.freeAbove.toFixed(0)} €
+                        </span>
+                      )}
                     </span>
                   </div>
                 </div>
