@@ -275,9 +275,10 @@ function PromoCodeForm({
 
       onSuccess()
       onClose()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors de la sauvegarde:', error)
-      alert('Erreur lors de la sauvegarde du code promo')
+      const message = error?.message || error?.details || 'Erreur inconnue'
+      alert(`Erreur lors de la sauvegarde du code promo : ${message}`)
     } finally {
       setLoading(false)
     }
