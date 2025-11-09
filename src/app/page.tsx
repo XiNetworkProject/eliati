@@ -26,7 +26,7 @@ export default async function Home() {
   return (
     <div>
       <Header />
-      <main className="mx-auto max-w-6xl px-4 py-8 space-y-10">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8 sm:space-y-12">
         <MainCarousel />
         <Section title="Catégories">
           <CategoryTiles />
@@ -34,11 +34,11 @@ export default async function Home() {
         <Section title="Nouveautés">
           <ProductGrid items={mapped} />
         </Section>
-        <section className="bg-champagne/30 rounded-2xl p-8 text-center">
-          <h2 className="font-script text-4xl mb-4 text-leather">
+        <section className="bg-champagne/30 border border-gold/30 rounded-2xl p-6 sm:p-10 text-center sm:text-left shadow-sm">
+          <h2 className="font-script text-3xl sm:text-4xl mb-3 sm:mb-4 text-leather">
             Bijoux pensés à quatre mains, faits pour durer.
           </h2>
-          <p className="text-taupe max-w-2xl mx-auto">
+          <p className="text-taupe text-sm sm:text-base leading-relaxed max-w-2xl mx-auto sm:mx-0">
             Chez <strong>EliAti</strong>, deux sœurs transforment les souvenirs
             en parures. Des colliers délicats aux bagues fines, chaque pièce est
             assemblée avec soin, dans des tonalités ivory, champagne et or rose.

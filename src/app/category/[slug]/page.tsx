@@ -34,12 +34,16 @@ export default async function CategoryPage({
   return (
     <div>
       <Header />
-      <Section title={cat?.name ?? 'Catégorie'}>
-        {cat?.description && (
-          <p className="text-taupe mb-4">{cat.description}</p>
-        )}
-        <ProductGrid items={items} />
-      </Section>
+      <main className="bg-gradient-to-br from-ivory via-champagne/10 to-rose/5">
+        <Section title={cat?.name ?? 'Catégorie'}>
+          {cat?.description && (
+            <p className="text-taupe text-sm sm:text-base leading-relaxed">
+              {cat.description}
+            </p>
+          )}
+          <ProductGrid items={items} />
+        </Section>
+      </main>
       <Footer />
     </div>
   )
