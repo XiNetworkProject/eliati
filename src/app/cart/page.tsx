@@ -12,10 +12,10 @@ import Footer from '@/components/Footer'
 
 const COLISSIMO_CONFIG = {
   label: 'Colissimo Suivi',
-  basePrice: 6.9,
-  reducedPrice: 3.9,
+  basePrice: 7.9,
+  reducedPrice: 4.5,
   reducedAbove: 60,
-  freeAbove: 120,
+  freeAbove: 100,
   extraItemThreshold: 4,
   extraItemFee: 1.5,
   description: 'Livraison à domicile avec suivi (48h ouvrées)',
