@@ -11,29 +11,32 @@ import Footer from '@/components/Footer'
 
 const COLISSIMO_CONFIG = {
   label: 'Colissimo Suivi',
-  basePrice: 7.9,
-  reducedPrice: 4.5,
-  reducedAbove: 60,
+  description: 'Tarifs officiels Colissimo La Poste (France métropolitaine).',
   freeAbove: 100,
-  description: 'Livraison à domicile avec suivi (48h ouvrées)',
+  weightBrackets: [
+    { max: 250, price: 4.18 },
+    { max: 500, price: 6.68 },
+    { max: 750, price: 7.57 },
+    { max: 1000, price: 8.10 },
+    { max: 2000, price: 9.35 },
+    { max: 5000, price: 14.10 },
+    { max: 10000, price: 21.20 },
+    { max: 30000, price: 32.70 },
+    { max: Number.MAX_SAFE_INTEGER, price: 32.70 },
+  ],
+}
+
+function findColissimoBracket(totalWeightGrams: number) {
+  return (
+    COLISSIMO_CONFIG.weightBrackets.find((bracket) => totalWeightGrams <= bracket.max) ||
+    COLISSIMO_CONFIG.weightBrackets[COLISSIMO_CONFIG.weightBrackets.length - 1]
+  )
 }
 
 function estimateCartShipping(subtotal: number, totalWeightGrams: number) {
   if (subtotal >= COLISSIMO_CONFIG.freeAbove) return 0
-  if (
-    COLISSIMO_CONFIG.reducedAbove &&
-    COLISSIMO_CONFIG.reducedPrice !== undefined &&
-    subtotal >= COLISSIMO_CONFIG.reducedAbove
-  ) {
-    return COLISSIMO_CONFIG.reducedPrice
-  }
-  if (totalWeightGrams <= 250) return COLISSIMO_CONFIG.basePrice
-  if (totalWeightGrams <= 500) return 8.9
-  if (totalWeightGrams <= 750) return 9.9
-  if (totalWeightGrams <= 1000) return 10.9
-  if (totalWeightGrams <= 2000) return 13.9
-  if (totalWeightGrams <= 5000) return 19.9
-  return 29.9
+  const bracket = findColissimoBracket(totalWeightGrams)
+  return Number(bracket.price.toFixed(2))
 }
 
 export default function CartPage() {
@@ -268,7 +271,7 @@ export default function CartPage() {
                       )}
                       {(totalWeight ?? 0) > 0 && (
                         <span className="block text-xs text-taupe/80 mt-1">
-                          Poids estimé : {(totalWeight / 1000).toFixed(2)} kg
+                          Poids estimé : {(totalWeight / 1000).toFixed(2)} kg • Tranche ≤ {(findColissimoBracket(totalWeight).max === Number.MAX_SAFE_INTEGER ? '30 kg' : `${(findColissimoBracket(totalWeight).max / 1000).toFixed(findColissimoBracket(totalWeight).max >= 1000 ? 1 : 3)} kg`)}
                         </span>
                       )}
                     </span>

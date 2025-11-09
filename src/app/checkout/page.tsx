@@ -45,19 +45,21 @@ const SHIPPING_OPTIONS: ShippingOption[] = [
   {
     id: 'colissimo',
     label: 'Colissimo Suivi',
-    description: 'Livraison à domicile avec suivi et assurance incluse.',
+    description: 'Tarifs officiels Colissimo La Poste (France métropolitaine).',
     delay: '48h ouvrées',
     weightBrackets: [
-      { max: 250, price: 7.9 },
-      { max: 500, price: 8.9 },
-      { max: 750, price: 9.9 },
-      { max: 1000, price: 10.9 },
-      { max: 2000, price: 13.9 },
-      { max: 5000, price: 19.9 },
-      { max: Number.MAX_SAFE_INTEGER, price: 29.9 },
+      { max: 250, price: 4.18 },
+      { max: 500, price: 6.68 },
+      { max: 750, price: 7.57 },
+      { max: 1000, price: 8.10 },
+      { max: 2000, price: 9.35 },
+      { max: 5000, price: 14.10 },
+      { max: 10000, price: 21.20 },
+      { max: 30000, price: 32.70 },
+      { max: Number.MAX_SAFE_INTEGER, price: 32.70 },
     ],
     freeAbove: 100,
-    insurance: "Assurance incluse jusqu'à 200 €",
+    insurance: "Assurance Colissimo incluse jusqu'à 200 €",
   },
 ]
 
@@ -457,7 +459,7 @@ export default function CheckoutPage() {
                           </p>
                         )}
                         <p className="mt-3 text-xs text-taupe/80">
-                          Poids estimé : {(totalWeightGrams / 1000).toFixed(2)} kg • Tranche jusqu&apos;à {(bracket.max === Number.MAX_SAFE_INTEGER ? '∞' : `${(bracket.max / 1000).toFixed(bracket.max >= 1000 ? 1 : 3)} kg`)}
+                          Poids estimé : {(totalWeightGrams / 1000).toFixed(2)} kg • Tranche ≤ {(bracket.max === Number.MAX_SAFE_INTEGER ? '30 kg' : `${(bracket.max / 1000).toFixed(bracket.max >= 1000 ? 1 : 3)} kg`)}
                         </p>
                       </div>
                     </button>
