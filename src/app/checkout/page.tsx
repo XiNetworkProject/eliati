@@ -72,6 +72,8 @@ export default function CheckoutPage() {
     [shippingOption, total, totalWeightGrams]
   )
 
+  const finalTotal = useMemo(() => Math.max(0, total + shippingCost), [total, shippingCost])
+
   // Rediriger si panier vide
   if (items.length === 0) {
     return (
@@ -207,8 +209,6 @@ export default function CheckoutPage() {
     console.error('Erreur PayPal:', error)
     alert('Erreur lors du paiement PayPal. Veuillez réessayer.')
   }
-
-  const finalTotal = useMemo(() => Math.max(0, total + shippingCost), [total, shippingCost])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-ivory via-champagne/10 to-rose/5">
