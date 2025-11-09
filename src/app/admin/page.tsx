@@ -45,6 +45,21 @@ const SHIPPING_METHODS: Record<string, { label: string; description?: string; de
     description: 'Livraison à domicile avec suivi et assurance incluse',
     delay: '48h ouvrées',
   },
+  mondial_relay_point: {
+    label: 'Mondial Relay – Point Relais',
+    description: 'Retrait en point relais partenaire',
+    delay: '3 à 5 jours ouvrés',
+  },
+  mondial_relay_locker: {
+    label: 'Mondial Relay – Locker',
+    description: 'Retrait en consigne automatique',
+    delay: '3 à 5 jours ouvrés',
+  },
+  mondial_relay_home: {
+    label: 'Mondial Relay – Domicile',
+    description: 'Livraison à domicile avec signature',
+    delay: '2 à 4 jours ouvrés',
+  },
 }
 
 export default function AdminDashboard() {
@@ -680,6 +695,9 @@ function OrdersTab() {
                         <p className="text-sm font-medium text-leather">
                           {order.shipping_address.method?.label || SHIPPING_METHODS[order.shipping_method ?? '']?.label || 'Colissimo'}
                         </p>
+                        {order.shipping_address.method?.description && (
+                          <p className="text-xs text-taupe mt-1">{order.shipping_address.method.description}</p>
+                        )}
                         {order.shipping_address.method?.pricing?.freeAbove && (
                           <p className="text-xs text-green-700 mt-1">Livraison offerte dès {order.shipping_address.method?.pricing?.freeAbove?.toFixed(0)} €</p>
                         )}

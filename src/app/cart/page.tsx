@@ -8,35 +8,16 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import { SHIPPING_OPTIONS, findWeightBracket, calculateShippingPrice } from '@/lib/shipping'
 
-const COLISSIMO_CONFIG = {
-  label: 'Colissimo Suivi',
-  description: 'Tarifs officiels Colissimo La Poste (France métropolitaine).',
-  freeAbove: 100,
-  weightBrackets: [
-    { max: 250, price: 4.18 },
-    { max: 500, price: 6.68 },
-    { max: 750, price: 7.57 },
-    { max: 1000, price: 8.10 },
-    { max: 2000, price: 9.35 },
-    { max: 5000, price: 14.10 },
-    { max: 10000, price: 21.20 },
-    { max: 30000, price: 32.70 },
-    { max: Number.MAX_SAFE_INTEGER, price: 32.70 },
-  ],
-}
-
-function findColissimoBracket(totalWeightGrams: number) {
-  return (
-    COLISSIMO_CONFIG.weightBrackets.find((bracket) => totalWeightGrams <= bracket.max) ||
-    COLISSIMO_CONFIG.weightBrackets[COLISSIMO_CONFIG.weightBrackets.length - 1]
+function estimateCheapestShipping(subtotal: number, totalWeightGrams: number) {
+  return SHIPPING_OPTIONS.reduce(
+    (best, option) => {
+      const price = calculateShippingPrice(option, subtotal, totalWeightGrams)
+      return price < best.price ? { option, price } : best
+    },
+    { option: SHIPPING_OPTIONS[0], price: calculateShippingPrice(SHIPPING_OPTIONS[0], subtotal, totalWeightGrams) }
   )
-}
-
-function estimateCartShipping(subtotal: number, totalWeightGrams: number) {
-  if (subtotal >= COLISSIMO_CONFIG.freeAbove) return 0
-  const bracket = findColissimoBracket(totalWeightGrams)
-  return Number(bracket.price.toFixed(2))
 }
 
 export default function CartPage() {
@@ -57,7 +38,14 @@ export default function CartPage() {
   const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [loadingPromo, setLoadingPromo] = useState(false)
 
-  const estimatedShipping = useMemo(() => estimateCartShipping(subtotal, totalWeight), [subtotal, totalWeight])
+  const { option: bestOption, price: estimatedShipping } = useMemo(
+    () => estimateCheapestShipping(subtotal, totalWeight),
+    [subtotal, totalWeight]
+  )
+  const bestBracket = useMemo(
+    () => findWeightBracket(bestOption, totalWeight),
+    [bestOption, totalWeight]
+  )
 
   const handleApplyPromo = async () => {
     if (!promoCodeInput.trim()) return
@@ -261,19 +249,22 @@ export default function CartPage() {
                   <div className="flex justify-between items-start text-sm">
                     <span className="text-taupe">Livraison</span>
                     <span className="text-right text-taupe">
-                      {COLISSIMO_CONFIG.label}
+                      {bestOption.label}
                       <span className="block text-leather font-medium text-base">{estimatedShipping.toFixed(2)} €</span>
-                      <span className="block text-xs italic">{COLISSIMO_CONFIG.description}</span>
-                      {COLISSIMO_CONFIG.freeAbove && (
+                      <span className="block text-xs italic">{bestOption.description}</span>
+                      {bestOption.freeAbove && (
                         <span className="block text-xs text-green-700 mt-1">
-                          Livraison offerte dès {COLISSIMO_CONFIG.freeAbove.toFixed(0)} €
+                          Livraison offerte dès {bestOption.freeAbove.toFixed(0)} €
                         </span>
                       )}
                       {(totalWeight ?? 0) > 0 && (
                         <span className="block text-xs text-taupe/80 mt-1">
-                          Poids estimé : {(totalWeight / 1000).toFixed(2)} kg • Tranche ≤ {(findColissimoBracket(totalWeight).max === Number.MAX_SAFE_INTEGER ? '30 kg' : `${(findColissimoBracket(totalWeight).max / 1000).toFixed(findColissimoBracket(totalWeight).max >= 1000 ? 1 : 3)} kg`)}
+                          Poids estimé : {(totalWeight / 1000).toFixed(2)} kg • Tranche ≤ {(bestBracket.max === Number.MAX_SAFE_INTEGER ? '30 kg' : `${(bestBracket.max / 1000).toFixed(bestBracket.max >= 1000 ? 1 : 3)} kg`)}
                         </span>
                       )}
+                      <span className="block text-xs text-taupe mt-2">
+                        Autres options (Colissimo, Mondial Relay Locker / Domicile) disponibles à l&apos;étape suivante.
+                      </span>
                     </span>
                   </div>
                 </div>

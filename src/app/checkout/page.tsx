@@ -12,6 +12,12 @@ import Footer from '@/components/Footer'
 import Image from 'next/image'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import {
+  SHIPPING_OPTIONS,
+  type ShippingOption,
+  findWeightBracket,
+  calculateShippingPrice,
+} from '@/lib/shipping'
 
 type CheckoutForm = {
   // Informations personnelles
@@ -29,57 +35,6 @@ type CheckoutForm = {
   
   // Notes
   notes: string
-}
-
-type ShippingOption = {
-  id: string
-  label: string
-  description: string
-  delay: string
-  weightBrackets: { max: number; price: number }[]
-  insurance?: string
-  freeAbove?: number
-}
-
-const SHIPPING_OPTIONS: ShippingOption[] = [
-  {
-    id: 'colissimo',
-    label: 'Colissimo Suivi',
-    description: 'Tarifs officiels Colissimo La Poste (France métropolitaine).',
-    delay: '48h ouvrées',
-    weightBrackets: [
-      { max: 250, price: 4.18 },
-      { max: 500, price: 6.68 },
-      { max: 750, price: 7.57 },
-      { max: 1000, price: 8.10 },
-      { max: 2000, price: 9.35 },
-      { max: 5000, price: 14.10 },
-      { max: 10000, price: 21.20 },
-      { max: 30000, price: 32.70 },
-      { max: Number.MAX_SAFE_INTEGER, price: 32.70 },
-    ],
-    freeAbove: 100,
-    insurance: "Assurance Colissimo incluse jusqu'à 200 €",
-  },
-]
-
-function findWeightBracket(option: ShippingOption, totalWeightGrams: number) {
-  return (
-    option.weightBrackets.find((bracket) => totalWeightGrams <= bracket.max) ||
-    option.weightBrackets[option.weightBrackets.length - 1]
-  )
-}
-
-function calculateShippingPrice(option: ShippingOption, subtotal: number, totalWeightGrams: number) {
-  if (!option) return 0
-
-  // Livraison offerte au-delà d'un certain montant
-  if (option.freeAbove !== undefined && subtotal >= option.freeAbove) {
-    return 0
-  }
-
-  const bracket = findWeightBracket(option, totalWeightGrams)
-  return Number(bracket.price.toFixed(2))
 }
 
 export default function CheckoutPage() {
@@ -112,12 +67,10 @@ export default function CheckoutPage() {
     [shippingOption, totalWeightGrams]
   )
 
-  const shippingCost = useMemo(() => {
-    if (shippingOption.freeAbove !== undefined && total >= shippingOption.freeAbove) {
-      return 0
-    }
-    return Number(appliedBracket.price.toFixed(2))
-  }, [shippingOption.freeAbove, total, appliedBracket])
+  const shippingCost = useMemo(
+    () => calculateShippingPrice(shippingOption, total, totalWeightGrams),
+    [shippingOption, total, totalWeightGrams]
+  )
 
   // Rediriger si panier vide
   if (items.length === 0) {
