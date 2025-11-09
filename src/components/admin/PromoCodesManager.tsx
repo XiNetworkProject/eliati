@@ -19,6 +19,24 @@ type PromoCode = {
   created_at: string
 }
 
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  if (typeof error === 'object' && error !== null) {
+    if ('message' in error && typeof (error as { message?: unknown }).message === 'string') {
+      return (error as { message: string }).message
+    }
+
+    if ('details' in error && typeof (error as { details?: unknown }).details === 'string') {
+      return (error as { details: string }).details
+    }
+  }
+
+  return 'Erreur inconnue'
+}
+
 export default function PromoCodesManager() {
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([])
   const [showForm, setShowForm] = useState(false)
@@ -277,11 +295,7 @@ function PromoCodeForm({
       onClose()
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error)
-      const message = error instanceof Error
-        ? error.message
-        : (typeof error === 'object' && error && 'message' in error && typeof (error as any).message === 'string'
-            ? (error as any).message
-            : 'Erreur inconnue')
+      const message = getErrorMessage(error)
       alert(`Erreur lors de la sauvegarde du code promo : ${message}`)
     } finally {
       setLoading(false)
