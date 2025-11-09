@@ -37,6 +37,8 @@ const getErrorMessage = (error: unknown): string => {
   return 'Erreur inconnue'
 }
 
+const isNumber = (value: unknown): value is number => typeof value === 'number' && !Number.isNaN(value)
+
 export default function PromoCodesManager() {
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([])
   const [showForm, setShowForm] = useState(false)
@@ -133,7 +135,7 @@ export default function PromoCodesManager() {
                       ? `-${code.discount_percent}%` 
                       : `-${(code.discount_amount_cents || 0) / 100} €`
                     }
-                    {code.min_order_cents && (
+                    {isNumber(code.min_order_cents) && (
                       <span className="ml-2">
                         (min. {(code.min_order_cents / 100).toFixed(2)} €)
                       </span>
