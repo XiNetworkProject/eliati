@@ -7,6 +7,11 @@ import { CartProvider } from "@/contexts/CartContext";
 export const metadata: Metadata = {
   title: "EliAti – Bijoux",
   description: "Bijoux faits main – colliers, boucles, bagues, bracelets.",
+  icons: {
+    icon: "/logoeliati.png",
+    apple: "/logoeliati.png",
+    shortcut: "/logoeliati.png",
+  },
 };
 
 export default function RootLayout({
