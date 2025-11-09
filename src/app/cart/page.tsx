@@ -262,9 +262,6 @@ export default function CartPage() {
                           Poids estimé : {(totalWeight / 1000).toFixed(2)} kg • Tranche ≤ {(bestBracket.max === Number.MAX_SAFE_INTEGER ? '30 kg' : `${(bestBracket.max / 1000).toFixed(bestBracket.max >= 1000 ? 1 : 3)} kg`)}
                         </span>
                       )}
-                      <span className="block text-xs text-taupe mt-2">
-                        Autres options (Colissimo, Mondial Relay Locker / Domicile) disponibles à l&apos;étape suivante.
-                      </span>
                     </span>
                   </div>
                 </div>
