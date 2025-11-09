@@ -19,6 +19,9 @@ export type PromoCode = {
   discountType: 'percentage' | 'fixed'
   discountValue: number
   minAmount?: number
+  maxUses?: number | null
+  usedCount?: number
+  expiresAt?: string | null
 }
 
 type CartContextType = {
@@ -152,7 +155,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('promo_codes')
-        .select('*')
+        .select('code, discount_percent, discount_amount_cents, min_order_cents, max_uses, used_count, expires_at, is_active')
         .eq('code', code.toUpperCase())
         .eq('is_active', true)
         .single()
@@ -166,23 +169,41 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return { success: false, message: 'Ce code promo a expiré' }
       }
 
+      // Vérifier le nombre d'utilisations
+      if (typeof data.max_uses === 'number' && typeof data.used_count === 'number' && data.max_uses > 0 && data.used_count >= data.max_uses) {
+        return { success: false, message: 'Ce code promo a atteint son nombre d’utilisations maximum' }
+      }
+
+      const minAmountCents = typeof data.min_order_cents === 'number' ? data.min_order_cents : null
+      const discountPercent = typeof data.discount_percent === 'number' ? data.discount_percent : null
+      const discountAmountCents = typeof data.discount_amount_cents === 'number' ? data.discount_amount_cents : null
+
+      if (!discountPercent && !discountAmountCents) {
+        return { success: false, message: 'Ce code promo n’est pas correctement configuré' }
+      }
+
       // Vérifier le montant minimum
-      if (data.min_amount_cents && subtotal < data.min_amount_cents / 100) {
+      if (minAmountCents && subtotal < minAmountCents / 100) {
         return {
           success: false,
-          message: `Montant minimum de ${(data.min_amount_cents / 100).toFixed(2)} € requis`,
+          message: `Montant minimum de ${(minAmountCents / 100).toFixed(2)} € requis`,
         }
       }
 
       // Appliquer le code promo
+      const discountType = discountPercent ? 'percentage' : 'fixed'
+      const discountValue = discountType === 'percentage'
+        ? discountPercent!
+        : (discountAmountCents ?? 0) / 100
+
       setPromoCode({
         code: data.code,
-        discountType: data.discount_type === 'percentage' ? 'percentage' : 'fixed',
-        discountValue:
-          data.discount_type === 'percentage'
-            ? data.discount_value
-            : data.discount_value / 100,
-        minAmount: data.min_amount_cents ? data.min_amount_cents / 100 : undefined,
+        discountType,
+        discountValue,
+        minAmount: minAmountCents ? minAmountCents / 100 : undefined,
+        maxUses: typeof data.max_uses === 'number' ? data.max_uses : null,
+        usedCount: typeof data.used_count === 'number' ? data.used_count : undefined,
+        expiresAt: data.expires_at ?? null,
       })
 
       return { success: true, message: 'Code promo appliqué avec succès !' }
