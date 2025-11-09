@@ -10,6 +10,7 @@ type AddToCartButtonProps = {
     slug: string
     price_cents: number
     image?: string
+    weight_grams?: number | null
   }
   className?: string
 }
@@ -26,6 +27,7 @@ export default function AddToCartButton({ product, className }: AddToCartButtonP
       slug: product.slug,
       price: product.price_cents / 100,
       image: product.image,
+      weight: product.weight_grams ?? 0,
     })
 
     setAdded(true)

@@ -11,6 +11,7 @@ export type CartItem = {
   price: number
   quantity: number
   image?: string
+  weight?: number
 }
 
 export type PromoCode = {
@@ -26,6 +27,7 @@ type CartContextType = {
   subtotal: number
   discount: number
   total: number
+  totalWeight: number
   promoCode: PromoCode | null
   addItem: (item: Omit<CartItem, 'quantity'>) => void
   removeItem: (productId: string) => void
@@ -48,7 +50,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     
     if (savedCart) {
       try {
-        setItems(JSON.parse(savedCart))
+        const parsed: CartItem[] = JSON.parse(savedCart)
+        setItems(
+          parsed.map((item) => ({
+            ...item,
+            weight: item.weight ?? 0,
+          }))
+        )
       } catch (e) {
         console.error('Erreur lors du chargement du panier:', e)
       }
@@ -80,6 +88,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Calculs
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0)
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const totalWeight = items.reduce((sum, item) => sum + (item.weight ?? 0) * item.quantity, 0)
   
   let discount = 0
   if (promoCode) {
@@ -196,6 +205,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         subtotal,
         discount,
         total,
+        totalWeight,
         promoCode,
         addItem,
         removeItem,

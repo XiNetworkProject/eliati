@@ -30,6 +30,7 @@ create table public.products (
   is_new boolean default false,
   is_sale boolean default false,
   is_featured boolean default false,
+  weight_grams integer default 0,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );
@@ -96,6 +97,7 @@ create table public.orders (
   subtotal_cents integer not null,
   tax_cents integer default 0,
   shipping_cents integer default 0,
+  shipping_weight_grams integer default 0,
   discount_cents integer default 0,
   total_cents integer not null,
   promo_code_id uuid references public.promo_codes(id),

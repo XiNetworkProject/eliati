@@ -136,6 +136,7 @@ export default async function ProductPage({
                       slug: product.slug,
                       price_cents: product.price_cents,
                       image: product.product_images?.[0]?.url,
+                      weight_grams: product.weight_grams ?? 0,
                     }}
                     className="w-full"
                   />
@@ -161,6 +162,7 @@ export default async function ProductPage({
                     slug: product.slug,
                     price_cents: product.price_cents,
                     image: product.product_images?.[0]?.url,
+                    weight_grams: product.weight_grams ?? 0,
                   }}
                   className="w-full"
                 />

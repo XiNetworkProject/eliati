@@ -14,6 +14,7 @@ type Product = {
   compare_at_cents: number | null
   status: 'active' | 'draft'
   category_id: string | null
+  weight_grams?: number | null
   stock_quantity?: number | null
   stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'preorder'
   low_stock_threshold?: number
@@ -44,6 +45,7 @@ export default function ProductForm({ product, categories, onClose, onSuccess }:
     compare_at_cents: product?.compare_at_cents || null,
     status: product?.status || 'draft',
     category_id: product?.category_id || null,
+    weight_grams: product?.weight_grams ?? 0,
     stock_quantity: product?.stock_quantity ?? null,
     stock_status: product?.stock_status || 'in_stock',
     low_stock_threshold: product?.low_stock_threshold || 5,
@@ -91,6 +93,10 @@ export default function ProductForm({ product, categories, onClose, onSuccess }:
 
     if (formData.compare_at_cents && formData.compare_at_cents <= formData.price_cents) {
       newErrors.compare_at_cents = 'Le prix barré doit être supérieur au prix normal'
+    }
+
+    if (formData.weight_grams !== null && formData.weight_grams !== undefined && formData.weight_grams < 0) {
+      newErrors.weight_grams = 'Le poids doit être positif'
     }
 
     setErrors(newErrors)
@@ -258,6 +264,30 @@ export default function ProductForm({ product, categories, onClose, onSuccess }:
                   Prix original (pour les promos)
                 </p>
               </div>
+            </div>
+
+            {/* Poids */}
+            <div>
+              <label className="block text-sm font-medium text-leather mb-2">
+                Poids (grammes)
+              </label>
+              <Input
+                type="number"
+                min="0"
+                value={formData.weight_grams ?? 0}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  weight_grams: e.target.value === '' ? 0 : Math.max(0, Math.round(Number(e.target.value)))
+                }))}
+                placeholder="Ex: 120"
+                className={errors.weight_grams ? 'border-red-500' : ''}
+              />
+              {errors.weight_grams && (
+                <p className="text-red-500 text-sm mt-1">{errors.weight_grams}</p>
+              )}
+              <p className="text-xs text-taupe mt-1">
+                Poids total du bijou + emballage (en grammes) pour calculer la livraison.
+              </p>
             </div>
 
             {/* Statut */}

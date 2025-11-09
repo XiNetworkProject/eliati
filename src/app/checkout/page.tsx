@@ -36,13 +36,9 @@ type ShippingOption = {
   label: string
   description: string
   delay: string
-  basePrice: number
+  weightBrackets: { max: number; price: number }[]
   insurance?: string
-  reducedPrice?: number
-  reducedAbove?: number
   freeAbove?: number
-  extraItemThreshold?: number
-  extraItemFee?: number
 }
 
 const SHIPPING_OPTIONS: ShippingOption[] = [
@@ -51,17 +47,28 @@ const SHIPPING_OPTIONS: ShippingOption[] = [
     label: 'Colissimo Suivi',
     description: 'Livraison à domicile avec suivi et assurance incluse.',
     delay: '48h ouvrées',
-    basePrice: 7.9,
-    reducedPrice: 4.5,
-    reducedAbove: 60,
+    weightBrackets: [
+      { max: 250, price: 7.9 },
+      { max: 500, price: 8.9 },
+      { max: 750, price: 9.9 },
+      { max: 1000, price: 10.9 },
+      { max: 2000, price: 13.9 },
+      { max: 5000, price: 19.9 },
+      { max: Number.MAX_SAFE_INTEGER, price: 29.9 },
+    ],
     freeAbove: 100,
-    extraItemThreshold: 4,
-    extraItemFee: 1.5,
     insurance: "Assurance incluse jusqu'à 200 €",
   },
 ]
 
-function calculateShippingPrice(option: ShippingOption, subtotal: number, itemCount: number) {
+function findWeightBracket(option: ShippingOption, totalWeightGrams: number) {
+  return (
+    option.weightBrackets.find((bracket) => totalWeightGrams <= bracket.max) ||
+    option.weightBrackets[option.weightBrackets.length - 1]
+  )
+}
+
+function calculateShippingPrice(option: ShippingOption, subtotal: number, totalWeightGrams: number) {
   if (!option) return 0
 
   // Livraison offerte au-delà d'un certain montant
@@ -69,32 +76,13 @@ function calculateShippingPrice(option: ShippingOption, subtotal: number, itemCo
     return 0
   }
 
-  // Tarif réduit à partir d'un seuil
-  if (
-    option.reducedAbove !== undefined &&
-    option.reducedPrice !== undefined &&
-    subtotal >= option.reducedAbove
-  ) {
-    return option.reducedPrice
-  }
-
-  let price = option.basePrice
-
-  // Surcharge si beaucoup d'articles (ex: bijoux volumineux à emballer séparément)
-  if (
-    option.extraItemThreshold !== undefined &&
-    option.extraItemFee !== undefined &&
-    itemCount > option.extraItemThreshold
-  ) {
-    price += (itemCount - option.extraItemThreshold) * option.extraItemFee
-  }
-
-  return Number(price.toFixed(2))
+  const bracket = findWeightBracket(option, totalWeightGrams)
+  return Number(bracket.price.toFixed(2))
 }
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, subtotal, discount, total, promoCode, clearCart } = useCart()
+  const { items, subtotal, discount, total, promoCode, clearCart, totalWeight } = useCart()
   
   const [formData, setFormData] = useState<CheckoutForm>({
     firstName: '',
@@ -115,12 +103,19 @@ export default function CheckoutPage() {
   const [orderCreated, setOrderCreated] = useState(false)
   const [shippingOption, setShippingOption] = useState<ShippingOption>(SHIPPING_OPTIONS[0])
 
-  const itemCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items])
+  const totalWeightGrams = totalWeight
 
-  const shippingCost = useMemo(
-    () => calculateShippingPrice(shippingOption, total, itemCount),
-    [shippingOption, total, itemCount]
+  const appliedBracket = useMemo(
+    () => findWeightBracket(shippingOption, totalWeightGrams),
+    [shippingOption, totalWeightGrams]
   )
+
+  const shippingCost = useMemo(() => {
+    if (shippingOption.freeAbove !== undefined && total >= shippingOption.freeAbove) {
+      return 0
+    }
+    return Number(appliedBracket.price.toFixed(2))
+  }, [shippingOption.freeAbove, total, appliedBracket])
 
   // Rediriger si panier vide
   if (items.length === 0) {
@@ -196,21 +191,21 @@ export default function CheckoutPage() {
               price: shippingCost,
               delay: shippingOption.delay,
               pricing: {
-                base: shippingOption.basePrice,
-                reduced: shippingOption.reducedPrice ?? null,
-                reducedAbove: shippingOption.reducedAbove ?? null,
+                brackets: shippingOption.weightBrackets,
+                appliedBracket,
                 freeAbove: shippingOption.freeAbove ?? null,
-                extraItemThreshold: shippingOption.extraItemThreshold ?? null,
-                extraItemFee: shippingOption.extraItemFee ?? null,
+                totalWeightGrams,
                 cartValue: total,
-                itemCount,
+                freeApplied: shippingCost === 0,
               },
+              totalWeightGrams,
             },
           },
           subtotal_cents: Math.round(subtotal * 100),
           discount_cents: Math.round(discount * 100),
           shipping_cents: shippingAmountCents,
           shipping_method: shippingOption.id,
+          shipping_weight_grams: totalWeightGrams,
           total_cents: Math.round((total + shippingCost) * 100),
           status: 'pending',
           notes: formData.notes,
@@ -422,7 +417,8 @@ export default function CheckoutPage() {
               <div className="grid gap-4">
                 {SHIPPING_OPTIONS.map((option) => {
                   const selected = option.id === shippingOption.id
-                  const computedPrice = calculateShippingPrice(option, total, itemCount)
+                  const bracket = findWeightBracket(option, totalWeightGrams)
+                  const computedPrice = calculateShippingPrice(option, total, totalWeightGrams)
                   return (
                     <button
                       key={option.id}
@@ -445,11 +441,9 @@ export default function CheckoutPage() {
                             <p className="font-display text-lg text-leather">{option.label}</p>
                             <p className="text-sm text-taupe">{option.description}</p>
                             <p className="mt-2 text-xs text-taupe/80">
-                              {option.freeAbove !== undefined && option.reducedPrice !== undefined ? (
-                                <>Offerte dès {option.freeAbove.toFixed(0)} € • {option.reducedPrice.toFixed(2)} € entre {option.reducedAbove?.toFixed(0)} € et {option.freeAbove.toFixed(0)} €</>
-                              ) : option.freeAbove !== undefined ? (
-                                <>Offerte dès {option.freeAbove.toFixed(0)} €</>
-                              ) : null}
+                              {option.freeAbove !== undefined
+                                ? `Offerte dès ${option.freeAbove.toFixed(0)} €`
+                                : 'Tarif calculé automatiquement selon le poids'}
                             </p>
                           </div>
                           <div className="text-right">
@@ -457,16 +451,14 @@ export default function CheckoutPage() {
                             <p className="text-xs text-taupe">{option.delay}</p>
                           </div>
                         </div>
-                        {option.extraItemThreshold !== undefined && option.extraItemFee !== undefined && (
-                          <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 inline-block">
-                            Supplément de {option.extraItemFee.toFixed(2)} € par article au-delà de {option.extraItemThreshold}
-                          </p>
-                        )}
                         {option.insurance && (
                           <p className="mt-3 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2 inline-block">
                             {option.insurance}
                           </p>
                         )}
+                        <p className="mt-3 text-xs text-taupe/80">
+                          Poids estimé : {(totalWeightGrams / 1000).toFixed(2)} kg • Tranche jusqu&apos;à {(bracket.max === Number.MAX_SAFE_INTEGER ? '∞' : `${(bracket.max / 1000).toFixed(bracket.max >= 1000 ? 1 : 3)} kg`)}
+                        </p>
                       </div>
                     </button>
                   )
@@ -537,6 +529,12 @@ export default function CheckoutPage() {
                       {shippingOption.label} · {shippingCost.toFixed(2)} €
                     </span>
                   </div>
+                  {(totalWeightGrams ?? 0) > 0 && (
+                    <div className="flex justify-between text-xs text-taupe">
+                      <span>Poids total</span>
+                      <span>{(totalWeightGrams / 1000).toFixed(2)} kg</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Total final */}

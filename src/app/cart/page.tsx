@@ -1,6 +1,5 @@
 'use client'
-import { useState } from 'react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useCart } from '@/contexts/CartContext'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -16,25 +15,25 @@ const COLISSIMO_CONFIG = {
   reducedPrice: 4.5,
   reducedAbove: 60,
   freeAbove: 100,
-  extraItemThreshold: 4,
-  extraItemFee: 1.5,
   description: 'Livraison à domicile avec suivi (48h ouvrées)',
 }
 
-function estimateCartShipping(subtotal: number, itemCount: number) {
+function estimateCartShipping(subtotal: number, totalWeightGrams: number) {
   if (subtotal >= COLISSIMO_CONFIG.freeAbove) return 0
-  if (COLISSIMO_CONFIG.reducedAbove && COLISSIMO_CONFIG.reducedPrice !== undefined && subtotal >= COLISSIMO_CONFIG.reducedAbove) {
+  if (
+    COLISSIMO_CONFIG.reducedAbove &&
+    COLISSIMO_CONFIG.reducedPrice !== undefined &&
+    subtotal >= COLISSIMO_CONFIG.reducedAbove
+  ) {
     return COLISSIMO_CONFIG.reducedPrice
   }
-  let price = COLISSIMO_CONFIG.basePrice
-  if (
-    COLISSIMO_CONFIG.extraItemThreshold !== undefined &&
-    COLISSIMO_CONFIG.extraItemFee !== undefined &&
-    itemCount > COLISSIMO_CONFIG.extraItemThreshold
-  ) {
-    price += (itemCount - COLISSIMO_CONFIG.extraItemThreshold) * COLISSIMO_CONFIG.extraItemFee
-  }
-  return Number(price.toFixed(2))
+  if (totalWeightGrams <= 250) return COLISSIMO_CONFIG.basePrice
+  if (totalWeightGrams <= 500) return 8.9
+  if (totalWeightGrams <= 750) return 9.9
+  if (totalWeightGrams <= 1000) return 10.9
+  if (totalWeightGrams <= 2000) return 13.9
+  if (totalWeightGrams <= 5000) return 19.9
+  return 29.9
 }
 
 export default function CartPage() {
@@ -48,14 +47,14 @@ export default function CartPage() {
     removeItem,
     applyPromoCode,
     removePromoCode,
+    totalWeight,
   } = useCart()
 
   const [promoCodeInput, setPromoCodeInput] = useState('')
   const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [loadingPromo, setLoadingPromo] = useState(false)
 
-  const itemCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items])
-  const estimatedShipping = useMemo(() => estimateCartShipping(subtotal, itemCount), [subtotal, itemCount])
+  const estimatedShipping = useMemo(() => estimateCartShipping(subtotal, totalWeight), [subtotal, totalWeight])
 
   const handleApplyPromo = async () => {
     if (!promoCodeInput.trim()) return
@@ -265,6 +264,11 @@ export default function CartPage() {
                       {COLISSIMO_CONFIG.freeAbove && (
                         <span className="block text-xs text-green-700 mt-1">
                           Livraison offerte dès {COLISSIMO_CONFIG.freeAbove.toFixed(0)} €
+                        </span>
+                      )}
+                      {(totalWeight ?? 0) > 0 && (
+                        <span className="block text-xs text-taupe/80 mt-1">
+                          Poids estimé : {(totalWeight / 1000).toFixed(2)} kg
                         </span>
                       )}
                     </span>

@@ -14,6 +14,7 @@ type Order = {
   customer_email: string
   shipping_method: string | null
   shipping_cents: number
+  shipping_weight_grams: number | null
   total_cents: number
   status: string
   created_at: string
@@ -47,7 +48,7 @@ function OrderConfirmationContent() {
 
       const { data } = await supabase
         .from('orders')
-        .select('id, customer_name, customer_email, total_cents, status, created_at, shipping_method, shipping_cents, shipping_address')
+        .select('id, customer_name, customer_email, total_cents, status, created_at, shipping_method, shipping_cents, shipping_weight_grams, shipping_address')
         .eq('id', orderId)
         .single()
 
@@ -165,6 +166,11 @@ function OrderConfirmationContent() {
                 {order.shipping_address.method?.pricing?.freeAbove && (
                   <p className="text-xs text-green-700">
                     Livraison offerte dès {order.shipping_address.method.pricing.freeAbove.toFixed(0)} €
+                  </p>
+                )}
+                {(order.shipping_weight_grams ?? 0) > 0 && (
+                  <p className="text-xs text-taupe/80">
+                    Poids total : {((order.shipping_weight_grams ?? 0) / 1000).toFixed(2)} kg
                   </p>
                 )}
               </div>

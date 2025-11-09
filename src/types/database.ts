@@ -27,6 +27,7 @@ export type Product = {
   compare_at_cents: number | null
   status: ProductStatus
   category_id: string | null
+  weight_grams: number | null
   created_at: string
   updated_at: string
 }

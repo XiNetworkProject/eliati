@@ -22,6 +22,7 @@ type Product = {
   status: 'active' | 'draft'
   category_id: string | null
   created_at: string
+  weight_grams?: number | null
   stock_quantity?: number | null
   stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'preorder'
   low_stock_threshold?: number
@@ -432,6 +433,9 @@ function ProductsTab({
                       </span>
                     )}
                   </p>
+                  <p className="text-xs text-taupe uppercase tracking-wide">
+                    Poids : {product.weight_grams ? `${product.weight_grams} g` : 'Non renseigné'}
+                  </p>
                   <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                     <span 
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
@@ -541,6 +545,7 @@ function OrdersTab() {
     subtotal_cents: number
     discount_cents: number
     shipping_cents: number
+    shipping_weight_grams: number | null
     status: string
     shipping_method?: string | null
     paypal_order_id: string | null
@@ -689,6 +694,11 @@ function OrdersTab() {
                         {order.shipping_address.method?.pricing?.extraItemThreshold !== undefined && (
                           <p className="mt-1">
                             +{(order.shipping_address.method?.pricing?.extraItemFee ?? 0).toFixed(2)} € / article au-delà de {order.shipping_address.method?.pricing?.extraItemThreshold}
+                          </p>
+                        )}
+                        {(order.shipping_weight_grams ?? 0) > 0 && (
+                          <p className="mt-1 text-taupe/80">
+                            Poids total : {((order.shipping_weight_grams ?? 0) / 1000).toFixed(2)} kg
                           </p>
                         )}
                       </div>
