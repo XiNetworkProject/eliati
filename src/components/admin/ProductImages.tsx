@@ -7,9 +7,16 @@ import Image from 'next/image'
 
 const MAX_IMAGES = 3
 
+interface ProductImageItem {
+  id: string | number
+  url: string
+  alt: string | null
+  position: number
+}
+
 interface ProductImagesProps {
   productId: string
-  images: Array<{ id: number; url: string; alt: string | null; position: number }>
+  images: ProductImageItem[]
   onUpdate: () => void
 }
 
@@ -88,7 +95,7 @@ export default function ProductImages({ productId, images, onUpdate }: ProductIm
     }
   }
 
-  const handleDeleteImage = async (imageId: number, imageUrl: string) => {
+  const handleDeleteImage = async (imageId: string | number, imageUrl: string) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette image ?')) return
 
     try {

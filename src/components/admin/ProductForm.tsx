@@ -14,6 +14,7 @@ type Product = {
   compare_at_cents: number | null
   status: 'active' | 'draft'
   category_id: string | null
+  created_at?: string
   weight_grams?: number | null
   stock_quantity?: number | null
   stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'preorder'
@@ -21,6 +22,7 @@ type Product = {
   preorder_limit?: number | null
   preorder_count?: number
   preorder_available_date?: string | null
+  updated_at?: string
 }
 
 type Category = {
@@ -33,7 +35,7 @@ interface ProductFormProps {
   product?: Product | null
   categories: Category[]
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (savedProduct: Product) => void | Promise<void>
 }
 
 export default function ProductForm({ product, categories, onClose, onSuccess }: ProductFormProps) {
@@ -110,24 +112,35 @@ export default function ProductForm({ product, categories, onClose, onSuccess }:
 
     setLoading(true)
     try {
+      let savedProduct: Product | null = null
+
       if (product?.id) {
         // Mise à jour
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('products')
           .update(formData)
           .eq('id', product.id)
+          .select('*')
+          .single()
 
         if (error) throw error
+        savedProduct = data as Product
       } else {
         // Création
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('products')
           .insert([formData])
+          .select('*')
+          .single()
 
         if (error) throw error
+        savedProduct = data as Product
       }
 
-      onSuccess()
+      if (savedProduct) {
+        await Promise.resolve(onSuccess(savedProduct))
+      }
+
       onClose()
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error)

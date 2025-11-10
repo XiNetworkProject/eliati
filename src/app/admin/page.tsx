@@ -305,7 +305,14 @@ function AdminDashboard() {
             setShowProductForm(false)
             setEditingProduct(null)
           }}
-          onSuccess={loadData}
+          onSuccess={async (savedProduct) => {
+            const wasEditing = Boolean(editingProduct?.id)
+            await loadData()
+
+            if (!wasEditing && savedProduct.id) {
+              setSelectedProduct(savedProduct as unknown as Product)
+            }
+          }}
         />
       )}
 
