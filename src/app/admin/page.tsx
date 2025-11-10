@@ -1,15 +1,17 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import Image from 'next/image'
 import ProductForm from '@/components/admin/ProductForm'
 import ProductImages from '@/components/admin/ProductImages'
 import PromoCodesManager from '@/components/admin/PromoCodesManager'
 import PayPalSettings from '@/components/admin/PayPalSettings'
 import CarouselManager from '@/components/admin/CarouselManager'
 import CategoryManager from '@/components/admin/CategoryManager'
+import AdminGuard from '@/components/admin/AdminGuard'
 
 // Types pour l'administration
 type Product = {
@@ -62,8 +64,10 @@ const SHIPPING_METHODS: Record<string, { label: string; description?: string; de
   },
 }
 
-export default function AdminDashboard() {
+function AdminDashboard() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState('overview')
+  const [adminEmail, setAdminEmail] = useState<string | null>(null)
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -71,6 +75,21 @@ export default function AdminDashboard() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [productImages, setProductImages] = useState<Array<{ id: string; url: string; alt: string | null; sort_order: number }>>([])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    try {
+      const raw = window.localStorage.getItem('eliati-admin-auth')
+      if (!raw) return
+      const parsed = JSON.parse(raw)
+      if (parsed?.email) {
+        setAdminEmail(parsed.email)
+      }
+    } catch (error) {
+      console.error('Impossible de lire la session admin:', error)
+    }
+  }, [])
 
   // Charger les données au montage
   useEffect(() => {
@@ -120,6 +139,14 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('eliati-admin-auth')
+    }
+    setAdminEmail(null)
+    router.replace('/admin/login')
   }
 
   const handleDeleteProduct = async (productId: string) => {
@@ -194,6 +221,11 @@ export default function AdminDashboard() {
             <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-gold/20 to-gold/10 border border-gold/30 mx-auto sm:mx-0">
               <span className="text-xs font-medium text-leather tracking-wide">ADMIN</span>
             </div>
+            {adminEmail && (
+              <div className="mx-auto sm:mx-0 px-3 py-1.5 rounded-full bg-white/70 border border-gold/30 text-xs sm:text-sm text-taupe">
+                {adminEmail}
+              </div>
+            )}
             <Button 
               variant="outline" 
               size="sm"
@@ -204,6 +236,17 @@ export default function AdminDashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
               Voir le site
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-red-200 text-red-600 hover:bg-red-50 transition-all w-full sm:w-auto"
+              onClick={handleLogout}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" />
+              </svg>
+              Déconnexion
             </Button>
           </div>
         </div>
@@ -876,6 +919,23 @@ function AnalyticsTab() {
         </Card>
       </div>
     </div>
+  )
+}
+
+const SettingsTab = () => {
+  return (
+    <div className="bg-white/80 border border-gold/20 rounded-3xl p-8 shadow-xl">
+      <h2 className="text-2xl font-display text-leather mb-6">Paramètres</h2>
+      <p className="text-taupe">Paramètres globaux du site à venir.</p>
+    </div>
+  )
+}
+
+export default function AdminDashboardPage() {
+  return (
+    <AdminGuard>
+      <AdminDashboard />
+    </AdminGuard>
   )
 }
 

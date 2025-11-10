@@ -117,6 +117,20 @@ ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "public read admin_users" ON public.admin_users;
 CREATE POLICY "public read admin_users" ON public.admin_users FOR SELECT USING (true);
 
+CREATE TABLE IF NOT EXISTS public.admin_credentials (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text UNIQUE NOT NULL,
+  password_hash text NOT NULL,
+  secret_code_hash text,
+  secret_code_set_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now()
+);
+
+ALTER TABLE public.admin_credentials ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Enable all for admin_credentials" ON public.admin_credentials;
+CREATE POLICY "Enable all for admin_credentials" ON public.admin_credentials FOR ALL USING (true) WITH CHECK (true);
+
 -- 7. TABLE ANALYTICS (si elle n'existe pas)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS public.analytics (

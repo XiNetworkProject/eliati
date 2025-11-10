@@ -88,6 +88,15 @@ FOR ALL
 USING (true) 
 WITH CHECK (true);
 
+-- 11. ADMIN_CREDENTIALS - Permettre toutes les opérations
+-- =====================================================
+DROP POLICY IF EXISTS "Enable all for admin_credentials" ON public.admin_credentials;
+CREATE POLICY "Enable all for admin_credentials" 
+ON public.admin_credentials 
+FOR ALL 
+USING (true) 
+WITH CHECK (true);
+
 -- 10. ANALYTICS - Permettre toutes les opérations
 -- =====================================================
 DROP POLICY IF EXISTS "Enable all for analytics" ON public.analytics;
