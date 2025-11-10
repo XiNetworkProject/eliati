@@ -23,6 +23,16 @@ export default function Footer() {
                   Promos
                 </a>
               </li>
+              <li>
+                <a href="/info/acier-inoxydable" className="text-taupe hover:text-leather">
+                  Acier inoxydable
+                </a>
+              </li>
+              <li>
+                <a href="/mentions-legales" className="text-taupe hover:text-leather">
+                  Mentions légales
+                </a>
+              </li>
             </ul>
           </div>
           <div>
