@@ -43,6 +43,32 @@ type OrderItem = {
   charms: Array<{ label: string; price_cents: number }>
 }
 
+function normalizeOrderItems(data: Array<{ product_name: string; quantity: number; product_price_cents: number; charms: unknown }>): OrderItem[] {
+  return data.map((item) => {
+    const rawCharms = Array.isArray(item.charms) ? item.charms : []
+    const normalizedCharms = rawCharms
+      .map((charm) => {
+        if (charm && typeof (charm as { label?: unknown }).label === 'string') {
+          return {
+            label: (charm as { label: string }).label,
+            price_cents: typeof (charm as { price_cents?: unknown }).price_cents === 'number'
+              ? (charm as { price_cents: number }).price_cents
+              : 0,
+          }
+        }
+        return null
+      })
+      .filter((charm): charm is { label: string; price_cents: number } => Boolean(charm && charm.label))
+
+    return {
+      product_name: item.product_name,
+      quantity: item.quantity,
+      product_price_cents: item.product_price_cents,
+      charms: normalizedCharms,
+    }
+  })
+}
+
 function OrderConfirmationContent() {
   const searchParams = useSearchParams()
   const orderId = searchParams.get('id')
@@ -67,31 +93,7 @@ function OrderConfirmationContent() {
       ])
 
       if (orderResponse.data) setOrder(orderResponse.data)
-      if (itemsResponse.data) {
-        setItems(
-          itemsResponse.data.map((item) => {
-            const rawCharms = Array.isArray(item.charms) ? item.charms : []
-            const normalizedCharms = rawCharms
-              .map((charm) => {
-                if (charm && typeof charm.label === 'string') {
-                  return {
-                    label: charm.label,
-                    price_cents: typeof charm.price_cents === 'number' ? charm.price_cents : 0,
-                  }
-                }
-                return null
-              })
-              .filter((charm): charm is { label: string; price_cents: number } => Boolean(charm && charm.label))
-
-            return {
-              product_name: item.product_name,
-              quantity: item.quantity,
-              product_price_cents: item.product_price_cents,
-              charms: normalizedCharms,
-            }
-          })
-        )
-      }
+      if (itemsResponse.data) setItems(normalizeOrderItems(itemsResponse.data))
       setLoading(false)
     }
 

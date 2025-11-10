@@ -49,13 +49,20 @@ const parseCharmsOptions = (raw: Product['charms_options'] | string | null | und
       const parsed = JSON.parse(raw)
       if (Array.isArray(parsed)) {
         return parsed
-          .map((option: any) => ({
-            label: typeof option?.label === 'string' ? option.label : '',
-            price_cents: typeof option?.price_cents === 'number' ? option.price_cents : 0,
-          }))
-          .filter((option) => option.label)
+          .map((option: unknown) => {
+            if (option && typeof (option as { label?: unknown }).label === 'string') {
+              return {
+                label: (option as { label: string }).label,
+                price_cents: typeof (option as { price_cents?: unknown }).price_cents === 'number'
+                  ? (option as { price_cents: number }).price_cents
+                  : 0,
+              }
+            }
+            return null
+          })
+          .filter((option): option is { label: string; price_cents: number } => Boolean(option && option.label))
       }
-    } catch (error) {
+    } catch {
       // legacy format fallback handled below
     }
 
@@ -304,7 +311,7 @@ export default function ProductForm({ product, categories, onClose, onSuccess }:
               )}
 
               <div className="space-y-3">
-                {charms.map((field, index) => (
+                {charms.map((field) => (
                   <div key={field.id} className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-3 items-center bg-white/80 p-3 rounded-xl border border-gold/20">
                     <Input
                       value={field.label}

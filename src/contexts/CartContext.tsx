@@ -59,7 +59,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [promoCode, setPromoCode] = useState<PromoCode | null>(null)
 
-  const createOptionsKey = (item: { productId: string; charms?: Array<{ label: string; price: number }> }) => {
+  const createOptionsKey = (item: CartItemInput) => {
     const sortedCharms = (item.charms || [])
       .map(({ label }) => label.trim())
       .filter((label) => label.length > 0)
@@ -78,19 +78,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const parsed: CartItem[] = JSON.parse(savedCart)
         setItems(
           parsed.map((item) => {
-            const normalizedCharms: Array<{ label: string; price: number }> = Array.isArray((item as any).charms)
-              ? (item as any).charms.map((charm: any) => ({
+            const normalizedCharms = Array.isArray(item.charms)
+              ? item.charms.map((charm) => ({
                   label: typeof charm?.label === 'string' ? charm.label : '',
                   price: typeof charm?.price === 'number' ? charm.price : 0,
-                })).filter((charm: { label: string; price: number }) => charm.label)
+                })).filter((charm) => charm.label)
               : []
             const extras = normalizedCharms.reduce((sum, charm) => sum + charm.price, 0)
-            const basePrice = typeof (item as any).basePrice === 'number'
-              ? (item as any).basePrice
-              : Math.max(0, (item as any).price ?? 0 - extras)
+            const basePrice = typeof item.basePrice === 'number'
+              ? item.basePrice
+              : Math.max(0, item.price ?? 0 - extras)
             const unitPrice = Math.max(0, basePrice + extras)
             const optionsKey = createOptionsKey({
               productId: item.productId,
+              name: item.name,
+              slug: item.slug,
+              basePrice,
+              image: item.image,
+              weight: item.weight,
               charms: normalizedCharms,
             })
 
