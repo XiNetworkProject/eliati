@@ -15,32 +15,45 @@ type Category = {
   image_url: string | null
 }
 
+type Props = {
+  categories: Category[]
+  onUpdate: () => void | Promise<void>
+  protectedSlugs?: string[]
+}
+
 export default function CategoryManager({ 
   categories, 
-  onUpdate 
-}: { 
-  categories: Category[]
-  onUpdate: () => void
-}) {
+  onUpdate,
+  protectedSlugs = [],
+}: Props) {
   const [showForm, setShowForm] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
 
-  const handleDelete = async (id: string, imageUrl: string | null) => {
+  const normalizedProtectedSlugs = protectedSlugs.map((slug) => slug.toLowerCase())
+
+  const isProtected = (slug: string) => normalizedProtectedSlugs.includes(slug.toLowerCase())
+
+  const handleDelete = async (category: Category) => {
+    if (isProtected(category.slug)) {
+      alert('Cette catégorie est obligatoire pour la navigation et ne peut pas être supprimée.')
+      return
+    }
+
     if (!confirm('Supprimer cette catégorie ? Les produits ne seront pas supprimés.')) return
 
     try {
       // Supprimer de la base de données
-      await supabase.from('categories').delete().eq('id', id)
+      await supabase.from('categories').delete().eq('id', category.id)
 
       // Supprimer l'image du storage si elle existe
-      if (imageUrl && imageUrl.includes('supabase')) {
-        const fileName = imageUrl.split('/').pop()
+      if (category.image_url && category.image_url.includes('supabase')) {
+        const fileName = category.image_url.split('/').pop()
         if (fileName) {
           await supabase.storage.from('categories').remove([fileName])
         }
       }
 
-      onUpdate()
+      await Promise.resolve(onUpdate())
     } catch (error) {
       console.error('Erreur:', error)
       alert('Erreur lors de la suppression')
@@ -66,7 +79,9 @@ export default function CategoryManager({
       </div>
 
       <div className="grid gap-4">
-        {categories.map((category) => (
+        {categories.map((category) => {
+          const categoryProtected = isProtected(category.slug)
+          return (
           <Card key={category.id} className="overflow-hidden bg-white/80 backdrop-blur-sm border-gold/20 hover:shadow-md transition-all">
             <div className="p-5 flex items-center gap-5">
               {/* Image de la catégorie */}
@@ -90,9 +105,16 @@ export default function CategoryManager({
                 {category.description && (
                   <p className="text-sm text-taupe mb-2">{category.description}</p>
                 )}
-                <Badge className="bg-champagne/20 text-leather border border-gold/20">
-                  /{category.slug}
-                </Badge>
+                <div className="flex flex-wrap gap-2 items-center">
+                  <Badge className="bg-champagne/20 text-leather border border-gold/20">
+                    /{category.slug}
+                  </Badge>
+                  {categoryProtected && (
+                    <Badge className="bg-gold text-leather border border-gold/60">
+                      Catégorie système
+                    </Badge>
+                  )}
+                </div>
               </div>
 
               {/* Actions */}
@@ -114,8 +136,9 @@ export default function CategoryManager({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all"
-                  onClick={() => handleDelete(category.id, category.image_url)}
+                  className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => handleDelete(category)}
+                  disabled={categoryProtected}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -124,7 +147,7 @@ export default function CategoryManager({
               </div>
             </div>
           </Card>
-        ))}
+        )})}
       </div>
 
       {categories.length === 0 && (
@@ -147,6 +170,7 @@ export default function CategoryManager({
             setEditingCategory(null)
           }}
           onSuccess={onUpdate}
+          protectedSlugs={normalizedProtectedSlugs}
         />
       )}
     </div>
@@ -157,11 +181,13 @@ export default function CategoryManager({
 function CategoryForm({ 
   category, 
   onClose, 
-  onSuccess 
+  onSuccess,
+  protectedSlugs = [],
 }: { 
   category: Category | null
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: () => void | Promise<void>
+  protectedSlugs?: string[]
 }) {
   const [formData, setFormData] = useState({
     name: category?.name || '',
@@ -172,6 +198,9 @@ function CategoryForm({
   const [imagePreview, setImagePreview] = useState<string | null>(category?.image_url || null)
   const [uploading, setUploading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const normalizedProtectedSlugs = protectedSlugs.map((slug) => slug.toLowerCase())
+  const isProtected = category ? normalizedProtectedSlugs.includes(category.slug.toLowerCase()) : false
 
   const generateSlug = (name: string) => {
     return name
@@ -268,7 +297,7 @@ function CategoryForm({
         if (error) throw error
       }
 
-      onSuccess()
+      await Promise.resolve(onSuccess())
       onClose()
     } catch (error) {
       console.error('Erreur:', error)
@@ -356,9 +385,13 @@ function CategoryForm({
                 onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
                 placeholder="colliers"
                 className={errors.slug ? 'border-red-500' : ''}
+                disabled={isProtected}
               />
               {errors.slug && <p className="text-red-500 text-xs mt-1">{errors.slug}</p>}
               <p className="text-xs text-taupe mt-1">URL: /category/{formData.slug}</p>
+              {isProtected && (
+                <p className="text-xs text-leather/80 mt-1">Cette catégorie est protégée. Le slug ne peut pas être modifié.</p>
+              )}
             </div>
 
             {/* Description */}

@@ -13,6 +13,31 @@ import CarouselManager from '@/components/admin/CarouselManager'
 import CategoryManager from '@/components/admin/CategoryManager'
 import AdminGuard from '@/components/admin/AdminGuard'
 
+const PROTECTED_CATEGORIES = [
+  {
+    name: 'Colliers',
+    slug: 'colliers',
+    description: 'Colliers délicats et élégants',
+  },
+  {
+    name: "Boucles d'oreille",
+    slug: 'boucles',
+    description: 'Boucles d\'oreille fines et raffinées',
+  },
+  {
+    name: 'Bagues',
+    slug: 'bagues',
+    description: 'Bagues intemporelles et sophistiquées',
+  },
+  {
+    name: 'Bracelets',
+    slug: 'bracelets',
+    description: 'Bracelets délicats et modernes',
+  },
+]
+
+const PROTECTED_CATEGORY_SLUGS = PROTECTED_CATEGORIES.map((c) => c.slug.toLowerCase())
+
 // Types pour l'administration
 type Product = {
   id: string
@@ -126,10 +151,35 @@ function AdminDashboard() {
         .order('created_at', { ascending: false })
       
       // Charger les catégories
-      const { data: categoriesData } = await supabase
+      let { data: categoriesData } = await supabase
         .from('categories')
         .select('id, name, slug, description, image_url')
         .order('name')
+      const existingSlugs = new Set((categoriesData || []).map((c) => c.slug?.toLowerCase() ?? ''))
+      const missingCategories = PROTECTED_CATEGORIES.filter(
+        (cat) => !existingSlugs.has(cat.slug.toLowerCase())
+      )
+
+      if (missingCategories.length > 0) {
+        const { error: insertError } = await supabase.from('categories').insert(
+          missingCategories.map((cat) => ({
+            name: cat.name,
+            slug: cat.slug,
+            description: cat.description,
+            image_url: null,
+          }))
+        )
+
+        if (insertError) {
+          console.error('Erreur lors de la création des catégories protégées:', insertError)
+        } else {
+          const { data: refreshedCategories } = await supabase
+            .from('categories')
+            .select('id, name, slug, description, image_url')
+            .order('name')
+          categoriesData = refreshedCategories || categoriesData
+        }
+      }
       
       setProducts(productsData || [])
       setCategories(categoriesData || [])
@@ -287,7 +337,13 @@ function AdminDashboard() {
               onManageImages={(product) => setSelectedProduct(product)}
             />
           )}
-          {activeTab === 'categories' && <CategoryManager categories={categories} onUpdate={loadData} />}
+          {activeTab === 'categories' && (
+            <CategoryManager 
+              categories={categories} 
+              onUpdate={loadData} 
+              protectedSlugs={PROTECTED_CATEGORY_SLUGS}
+            />
+          )}
           {activeTab === 'carousel' && <CarouselManager />}
           {activeTab === 'promos' && <PromoCodesManager />}
           {activeTab === 'orders' && <OrdersTab />}
