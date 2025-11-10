@@ -46,7 +46,7 @@ export default async function ProductPage({
 
     if (Array.isArray(raw)) {
       return raw
-        .map((option: any) => ({
+        .map((option) => ({
           label: typeof option?.label === 'string' ? option.label : '',
           price_cents: typeof option?.price_cents === 'number' ? option.price_cents : 0,
         }))
@@ -58,13 +58,20 @@ export default async function ProductPage({
         const parsed = JSON.parse(raw)
         if (Array.isArray(parsed)) {
           return parsed
-            .map((option: any) => ({
-              label: typeof option?.label === 'string' ? option.label : '',
-              price_cents: typeof option?.price_cents === 'number' ? option.price_cents : 0,
-            }))
-            .filter((option) => option.label)
+            .map((option) => {
+              if (option && typeof (option as { label?: unknown }).label === 'string') {
+                return {
+                  label: (option as { label: string }).label,
+                  price_cents: typeof (option as { price_cents?: unknown }).price_cents === 'number'
+                    ? (option as { price_cents: number }).price_cents
+                    : 0,
+                }
+              }
+              return null
+            })
+            .filter((option): option is { label: string; price_cents: number } => Boolean(option && option.label))
         }
-      } catch (error) {
+      } catch {
         // ignore JSON error, fallback to legacy format
       }
 

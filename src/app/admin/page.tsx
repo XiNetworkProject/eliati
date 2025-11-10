@@ -240,8 +240,8 @@ function AdminDashboard() {
       setProducts(productsData || [])
       setCategories(categoriesData || [])
       
-    } catch (error) {
-      console.error('Erreur lors du chargement:', error)
+    } catch (err) {
+      console.error('Erreur lors du chargement:', err)
     } finally {
       setLoading(false)
     }
@@ -581,12 +581,6 @@ function ProductsTab({
   onDelete: (productId: string) => void
   onManageImages: (product: Product) => void
 }) {
-  const hasCharmsOptions = (options?: string | null) => {
-    if (!options) return false;
-    const charms = JSON.parse(options);
-    return Array.isArray(charms) && charms.length > 0;
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -982,8 +976,8 @@ function OrdersTab() {
                   <div className="mt-4 pt-4 border-t border-gold/20">
                     <p className="text-xs uppercase tracking-wide text-taupe mb-3">Articles commandés</p>
                     <div className="space-y-2">
-                      {orderItems.map((item, idx) => (
-                        <div key={idx} className="flex flex-col gap-2 p-3 bg-white rounded-lg border border-gold/20">
+                      {orderItems.map((item) => (
+                        <div key={`${item.product_name}-${item.quantity}-${item.product_price_cents}`} className="flex flex-col gap-2 p-3 bg-white rounded-lg border border-gold/20">
                           <div className="flex items-center justify-between gap-4">
                             <div>
                               <p className="text-sm font-medium text-leather">{item.product_name}</p>
@@ -996,7 +990,7 @@ function OrdersTab() {
                           {item.charms.length > 0 && (
                             <div className="text-xs text-taupe space-y-1">
                               {item.charms.map((charm) => (
-                                <p key={`${idx}-${charm.label}`}>
+                                <p key={`${item.product_name}-${item.quantity}-${item.product_price_cents}-${charm.label}`}>
                                   Charm : {charm.label}
                                   {charm.price_cents > 0 && ` (+${(charm.price_cents / 100).toFixed(2)} €)`}
                                 </p>
