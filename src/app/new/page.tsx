@@ -4,6 +4,8 @@ import Section from '@/components/Section'
 import ProductGrid from '@/components/ProductGrid'
 import { supabase } from '@/lib/supabase'
 
+export const revalidate = 0
+
 export default async function NewPage() {
   const { data: products } = await supabase
     .from('products')
