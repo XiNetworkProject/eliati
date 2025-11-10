@@ -3,7 +3,7 @@ import Footer from '@/components/Footer'
 import { supabase } from '@/lib/supabase'
 import AddToCartButton from '@/components/AddToCartButton'
 import { Badge } from '@/components/ui/badge'
-import Image from 'next/image'
+import ProductGallery from '@/components/ProductGallery'
 
 export default async function ProductPage({
   params,
@@ -13,7 +13,7 @@ export default async function ProductPage({
   const { id } = await params
   const { data: product } = await supabase
     .from('products')
-    .select('*,product_images(url,alt),categories(name)')
+    .select('*,product_images(url,alt,sort_order),categories(name)')
     .eq('id', id)
     .single()
 
@@ -41,41 +41,25 @@ export default async function ProductPage({
     product.compare_at_cents &&
     product.compare_at_cents > product.price_cents
 
+  const sortedImages = Array.isArray(product.product_images)
+    ? [...product.product_images].sort(
+        (a: { sort_order?: number | null }, b: { sort_order?: number | null }) =>
+          (a.sort_order ?? 0) - (b.sort_order ?? 0)
+      )
+    : []
+
+  const primaryImage = sortedImages[0]?.url ?? product.product_images?.[0]?.url ?? '/placeholder.jpg'
+
   return (
     <div>
       <Header />
       <main className="mx-auto max-w-6xl px-4 py-8">
         <div className="grid md:grid-cols-2 gap-8">
           {/* Galerie d'images */}
-          <div className="space-y-4">
-            <div className="aspect-square bg-champagne/30 rounded-2xl overflow-hidden border border-gold/30 relative">
-              <Image
-                src={product.product_images?.[0]?.url ?? '/placeholder.jpg'}
-                alt={product.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
-            </div>
-            {product.product_images && product.product_images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {product.product_images.slice(1).map((img: { url: string; alt: string | null }, i: number) => (
-                  <div
-                    key={i}
-                    className="aspect-square bg-champagne/30 rounded-lg overflow-hidden border border-gold/30 relative"
-                  >
-                    <Image
-                      src={img.url}
-                      alt={img.alt ?? ''}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 25vw, 12vw"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <ProductGallery
+            productName={product.name}
+            images={sortedImages}
+          />
 
           {/* Informations produit */}
           <div className="space-y-6">
@@ -135,7 +119,7 @@ export default async function ProductPage({
                       name: product.name,
                       slug: product.slug,
                       price_cents: product.price_cents,
-                      image: product.product_images?.[0]?.url,
+                      image: primaryImage,
                       weight_grams: product.weight_grams ?? 0,
                     }}
                     className="w-full"
@@ -161,7 +145,7 @@ export default async function ProductPage({
                     name: product.name,
                     slug: product.slug,
                     price_cents: product.price_cents,
-                    image: product.product_images?.[0]?.url,
+                    image: primaryImage,
                     weight_grams: product.weight_grams ?? 0,
                   }}
                   className="w-full"
