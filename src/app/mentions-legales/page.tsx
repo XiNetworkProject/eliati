@@ -19,6 +19,12 @@ const hostInfo = {
   website: 'https://vercel.com',
 }
 
+const supabaseInfo = {
+  name: 'Supabase Inc.',
+  address: '970 Toa Payoh North, #07-04, Singapore 318992',
+  website: 'https://supabase.com',
+}
+
 export const revalidate = 3600
 
 export default function LegalNoticePage() {
@@ -88,6 +94,28 @@ export default function LegalNoticePage() {
               <a href={hostInfo.website} className="text-leather underline" rel="noopener noreferrer" target="_blank">
                 {hostInfo.website}
               </a>
+            </li>
+          </ul>
+        </section>
+
+        <section className="space-y-4 rounded-3xl border border-rose/30 bg-rose/10 p-8">
+          <h2 className="font-display text-2xl text-leather">Prestataire base de données & stockage</h2>
+          <ul className="space-y-2 text-sm text-taupe">
+            <li>
+              <span className="font-medium text-leather">Service&nbsp;:</span> {supabaseInfo.name}
+            </li>
+            <li>
+              <span className="font-medium text-leather">Adresse&nbsp;:</span> {supabaseInfo.address}
+            </li>
+            <li>
+              <span className="font-medium text-leather">Site web&nbsp;:</span>{' '}
+              <a href={supabaseInfo.website} className="text-leather underline" rel="noopener noreferrer" target="_blank">
+                {supabaseInfo.website}
+              </a>
+            </li>
+            <li>
+              Supabase est utilisé pour l&apos;authentification, la base de données, le stockage des médias et la gestion
+              des formulaires. Les données collectées sont hébergées sur leurs serveurs sécurisés.
             </li>
           </ul>
         </section>
