@@ -223,7 +223,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-ivory via-champagne/10 to-rose/10 flex items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm border border-gold/20 shadow-xl p-8 space-y-6">
+      <Card className="w-full max-w-lg md:max-w-xl bg-white/90 backdrop-blur-sm border border-gold/20 shadow-xl p-8 md:p-10 space-y-6">
         <div className="text-center space-y-3">
           <div className="flex justify-center">
             <Image src="/logoeliatitransparent.png" alt="EliAti" width={140} height={50} priority />
@@ -245,7 +245,7 @@ export default function AdminLoginPage() {
         )}
 
         {step === 'credentials' && (
-          <form onSubmit={handleCredentialsSubmit} className="space-y-5">
+          <form onSubmit={handleCredentialsSubmit} className="space-y-5 text-left">
             <div className="space-y-2">
               <label className="text-sm font-medium text-leather">Adresse e-mail</label>
               <Input
@@ -266,14 +266,16 @@ export default function AdminLoginPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full bg-leather text-ivory hover:bg-leather/90" disabled={loading}>
-              {loading ? 'Vérification…' : 'Se connecter'}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-end">
+              <Button type="submit" className="w-full sm:w-auto px-6 bg-leather text-ivory hover:bg-leather/90" disabled={loading}>
+                {loading ? 'Vérification…' : 'Se connecter'}
+              </Button>
+            </div>
           </form>
         )}
 
         {step === 'setup-secret' && (
-          <form onSubmit={handleSecretSetup} className="space-y-5">
+          <form onSubmit={handleSecretSetup} className="space-y-5 text-left">
             <div className="space-y-2">
               <label className="text-sm font-medium text-leather">Code confidentiel</label>
               <Input
@@ -295,11 +297,11 @@ export default function AdminLoginPage() {
                 minLength={4}
               />
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button type="button" variant="outline" className="w-full" onClick={resetToCredentials}>
+            <div className="flex flex-col sm:flex-row gap-3 justify-end">
+              <Button type="button" variant="outline" className="w-full sm:w-auto px-6" onClick={resetToCredentials}>
                 Retour
               </Button>
-              <Button type="submit" className="w-full bg-leather text-ivory hover:bg-leather/90" disabled={loading}>
+              <Button type="submit" className="w-full sm:w-auto px-6 bg-leather text-ivory hover:bg-leather/90" disabled={loading}>
                 {loading ? 'Enregistrement…' : 'Valider' }
               </Button>
             </div>
@@ -307,7 +309,7 @@ export default function AdminLoginPage() {
         )}
 
         {step === 'verify-secret' && (
-          <form onSubmit={handleVerifySecret} className="space-y-5">
+          <form onSubmit={handleVerifySecret} className="space-y-5 text-left">
             <div className="space-y-2">
               <label className="text-sm font-medium text-leather">Code confidentiel</label>
               <Input
@@ -317,18 +319,18 @@ export default function AdminLoginPage() {
                 required
               />
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button type="button" variant="outline" className="w-full" onClick={resetToCredentials}>
+            <div className="flex flex-col sm:flex-row gap-3 justify-end">
+              <Button type="button" variant="outline" className="w-full sm:w-auto px-6" onClick={resetToCredentials}>
                 Changer d&apos;identifiants
               </Button>
-              <Button type="submit" className="w-full bg-leather text-ivory hover:bg-leather/90" disabled={loading}>
+              <Button type="submit" className="w-full sm:w-auto px-6 bg-leather text-ivory hover:bg-leather/90" disabled={loading}>
                 {loading ? 'Vérification…' : 'Continuer'}
               </Button>
             </div>
           </form>
         )}
 
-        <p className="text-xs text-center text-taupe/80">
+        <p className="text-xs md:text-sm text-center text-taupe/80">
           Pour toute assistance, contactez <span className="font-medium">Contacteliati@gmail.com</span>
         </p>
       </Card>

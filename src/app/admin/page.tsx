@@ -324,7 +324,12 @@ function AdminDashboard() {
               </div>
               <ProductImages
                 productId={selectedProduct.id}
-                images={productImages.map(img => ({ id: 0, url: img.url, alt: img.alt, position: img.sort_order }))}
+                images={productImages.map(img => ({
+                  id: img.id,
+                  url: img.url,
+                  alt: img.alt,
+                  position: typeof img.sort_order === 'number' ? img.sort_order : 0,
+                }))}
                 onUpdate={async () => {
                   const { data } = await supabase
                     .from('product_images')

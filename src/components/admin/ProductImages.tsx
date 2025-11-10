@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import Image from 'next/image'
 
+const MAX_IMAGES = 3
+
 interface ProductImagesProps {
   productId: string
   images: Array<{ id: number; url: string; alt: string | null; position: number }>
@@ -15,13 +17,22 @@ export default function ProductImages({ productId, images, onUpdate }: ProductIm
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
 
+  const remainingSlots = MAX_IMAGES - images.length
+
   const handleFileUpload = async (files: FileList) => {
     if (!files.length) return
 
+    if (remainingSlots <= 0) {
+      alert(`Vous ne pouvez ajouter que ${MAX_IMAGES} images par produit.`)
+      return
+    }
+
+    const filesToProcess = Array.from(files).slice(0, remainingSlots)
+
     setUploading(true)
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
+      for (let i = 0; i < filesToProcess.length; i++) {
+        const file = filesToProcess[i]
         
         // Vérifier le type de fichier
         if (!file.type.startsWith('image/')) {
@@ -152,19 +163,28 @@ export default function ProductImages({ productId, images, onUpdate }: ProductIm
         />
         <Button
           onClick={() => document.getElementById('image-upload')?.click()}
-          disabled={uploading}
+          disabled={uploading || remainingSlots <= 0}
           className="bg-leather text-ivory hover:bg-leather/90"
         >
-          {uploading ? 'Upload en cours...' : 'Sélectionner des images'}
+          {uploading
+            ? 'Upload en cours...'
+            : remainingSlots > 0
+              ? `Sélectionner des images (${MAX_IMAGES - remainingSlots}/${MAX_IMAGES})`
+              : 'Limite atteinte'}
         </Button>
         <p className="text-xs text-taupe mt-2">
-          Formats acceptés: JPG, PNG, WebP (max 5MB par image)
+          Formats acceptés: JPG, PNG, WebP (max 5MB par image) • {MAX_IMAGES} images max
         </p>
+        {remainingSlots <= 0 && (
+          <p className="text-xs text-red-600 mt-1">
+            Limite atteinte : supprimez une image avant d&apos;en ajouter une nouvelle.
+          </p>
+        )}
       </div>
 
       {/* Liste des images */}
       {images.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {images
             .sort((a, b) => a.position - b.position)
             .map((image) => (
@@ -209,7 +229,7 @@ export default function ProductImages({ productId, images, onUpdate }: ProductIm
         <div className="text-center py-8 text-taupe">
           <div className="text-4xl mb-2">🖼️</div>
           <p>Aucune image ajoutée</p>
-          <p className="text-sm">Ajoutez des images pour votre produit</p>
+          <p className="text-sm">Ajoutez jusqu&apos;à {MAX_IMAGES} images pour votre produit</p>
         </div>
       )}
     </div>
