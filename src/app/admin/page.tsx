@@ -50,6 +50,26 @@ const hasCharmsOptions = (raw: any) => {
   return false
 }
 
+function normalizeCharms(raw: any): string {
+  if (!raw) return ''
+  if (Array.isArray(raw)) {
+    return raw
+      .map((option) => {
+        if (option && typeof option.label === 'string') {
+          const price = typeof option.price_cents === 'number' ? option.price_cents : 0
+          return `${option.label} | ${(price / 100).toFixed(2)} €`
+        }
+        return ''
+      })
+      .filter(Boolean)
+      .join('\n')
+  }
+  if (typeof raw === 'string') {
+    return raw
+  }
+  return ''
+}
+
 // Types pour l'administration
 type Product = {
   id: string
