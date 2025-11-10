@@ -33,6 +33,16 @@ export default function Footer() {
                   Mentions légales
                 </a>
               </li>
+              <li>
+                <a href="/cgv" className="text-taupe hover:text-leather">
+                  CGV
+                </a>
+              </li>
+              <li>
+                <a href="/politique-de-confidentialite" className="text-taupe hover:text-leather">
+                  Politique de confidentialité
+                </a>
+              </li>
             </ul>
           </div>
           <div>
