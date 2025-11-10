@@ -47,7 +47,7 @@ function parseCharmOptions(raw: unknown): CharmOption[] {
       if (Array.isArray(parsed)) {
         return parseCharmOptions(parsed)
       }
-    } catch (error) {
+    } catch {
       // legacy fallback handled below
     }
 
@@ -111,7 +111,7 @@ type Product = {
   preorder_limit?: number | null
   preorder_count?: number
   preorder_available_date?: string | null
-  charms_options?: any
+  charms_options?: unknown
 }
 
 type Category = {
@@ -121,6 +121,8 @@ type Category = {
   description: string | null
   image_url: string | null
 }
+
+type EditableProduct = Product & { charms_options?: CharmOption[] | null }
 
 const SHIPPING_METHODS: Record<string, { label: string; description?: string; delay?: string }> = {
   colissimo: {
@@ -153,7 +155,7 @@ function AdminDashboard() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [showProductForm, setShowProductForm] = useState(false)
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [editingProduct, setEditingProduct] = useState<EditableProduct | null>(null)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [productImages, setProductImages] = useState<Array<{ id: string; url: string; alt: string | null; sort_order: number }>>([])
 
@@ -386,7 +388,10 @@ function AdminDashboard() {
               products={products} 
               categories={categories} 
               onEdit={(product) => {
-                setEditingProduct(product)
+                setEditingProduct({
+                  ...product,
+                  charms_options: parseCharmOptions(product.charms_options),
+                })
                 setShowProductForm(true)
               }}
               onDelete={handleDeleteProduct}
@@ -768,12 +773,7 @@ function OrdersTab() {
         product_name: item.product_name,
         quantity: item.quantity,
         product_price_cents: item.product_price_cents,
-        charms: Array.isArray(item.charms)
-          ? item.charms.map((charm: any) => ({
-              label: typeof charm?.label === 'string' ? charm.label : '',
-              price_cents: typeof charm?.price_cents === 'number' ? charm.price_cents : 0,
-            })).filter((charm: { label: string; price_cents: number }) => charm.label)
-          : [],
+        charms: normalizeOrderItemCharms(item.charms),
       }))
     )
   }
@@ -1074,6 +1074,28 @@ function AnalyticsTab() {
       </div>
     </div>
   )
+}
+
+const normalizeOrderItemCharms = (raw: unknown): Array<{ label: string; price_cents: number }> => {
+  if (!raw) return []
+
+  if (Array.isArray(raw)) {
+    return raw
+      .map((charm) => {
+        if (charm && typeof (charm as { label?: unknown }).label === 'string') {
+          return {
+            label: (charm as { label: string }).label,
+            price_cents: typeof (charm as { price_cents?: unknown }).price_cents === 'number'
+              ? (charm as { price_cents: number }).price_cents
+              : 0,
+          }
+        }
+        return null
+      })
+      .filter((charm): charm is { label: string; price_cents: number } => Boolean(charm && charm.label))
+  }
+
+  return []
 }
 
 export default function AdminDashboardPage() {
