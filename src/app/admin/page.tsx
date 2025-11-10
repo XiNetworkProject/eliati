@@ -13,6 +13,61 @@ import CarouselManager from '@/components/admin/CarouselManager'
 import CategoryManager from '@/components/admin/CategoryManager'
 import AdminGuard from '@/components/admin/AdminGuard'
 
+type CharmOption = {
+  label: string
+  price_cents: number
+}
+
+function parseCharmOptions(raw: unknown): CharmOption[] {
+  if (!raw) return []
+
+  if (Array.isArray(raw)) {
+    return raw
+      .map((option) => {
+        if (option && typeof (option as { label?: unknown }).label === 'string') {
+          const price = typeof (option as { price_cents?: unknown }).price_cents === 'number'
+            ? (option as { price_cents: number }).price_cents
+            : 0
+          return {
+            label: (option as { label: string }).label,
+            price_cents: price,
+          }
+        }
+        return null
+      })
+      .filter((option): option is CharmOption => Boolean(option && option.label))
+  }
+
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim()
+    if (!trimmed || trimmed === '[]') return []
+
+    try {
+      const parsed = JSON.parse(trimmed)
+      if (Array.isArray(parsed)) {
+        return parseCharmOptions(parsed)
+      }
+    } catch (error) {
+      // legacy fallback handled below
+    }
+
+    return trimmed
+      .split(/\r?\n|,/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => {
+        const [label, pricePart] = line.split('|').map((part) => part.trim())
+        const price = pricePart ? parseFloat(pricePart.replace(',', '.')) : 0
+        return {
+          label,
+          price_cents: Number.isFinite(price) ? Math.round(price * 100) : 0,
+        }
+      })
+  }
+
+  return []
+}
+
 const PROTECTED_CATEGORIES = [
   {
     name: 'Colliers',
@@ -37,38 +92,6 @@ const PROTECTED_CATEGORIES = [
 ]
 
 const PROTECTED_CATEGORY_SLUGS = PROTECTED_CATEGORIES.map((c) => c.slug.toLowerCase())
-
-const hasCharmsOptions = (raw: any) => {
-  if (!raw) return false
-  if (Array.isArray(raw)) return raw.length > 0
-  if (typeof raw === 'string') {
-    const trimmed = raw.trim()
-    if (!trimmed) return false
-    if (trimmed === '[]') return false
-    return true
-  }
-  return false
-}
-
-function normalizeCharms(raw: any): string {
-  if (!raw) return ''
-  if (Array.isArray(raw)) {
-    return raw
-      .map((option) => {
-        if (option && typeof option.label === 'string') {
-          const price = typeof option.price_cents === 'number' ? option.price_cents : 0
-          return `${option.label} | ${(price / 100).toFixed(2)} €`
-        }
-        return ''
-      })
-      .filter(Boolean)
-      .join('\n')
-  }
-  if (typeof raw === 'string') {
-    return raw
-  }
-  return ''
-}
 
 // Types pour l'administration
 type Product = {
@@ -616,7 +639,7 @@ function ProductsTab({
                         {categories.find(c => c.id === product.category_id)?.name || 'Catégorie'}
                       </span>
                     )}
-                    {hasCharmsOptions(product.charms_options) && (
+                    {parseCharmOptions(product.charms_options).length > 0 && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gold/20 text-leather border border-gold/30">
                         Charms disponibles
                       </span>
@@ -1055,15 +1078,6 @@ function AnalyticsTab() {
           </div>
         </Card>
       </div>
-    </div>
-  )
-}
-
-const SettingsTab = () => {
-  return (
-    <div className="bg-white/80 border border-gold/20 rounded-3xl p-8 shadow-xl">
-      <h2 className="text-2xl font-display text-leather mb-6">Paramètres</h2>
-      <p className="text-taupe">Paramètres globaux du site à venir.</p>
     </div>
   )
 }

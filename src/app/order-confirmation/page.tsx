@@ -69,17 +69,27 @@ function OrderConfirmationContent() {
       if (orderResponse.data) setOrder(orderResponse.data)
       if (itemsResponse.data) {
         setItems(
-          itemsResponse.data.map((item) => ({
-            product_name: item.product_name,
-            quantity: item.quantity,
-            product_price_cents: item.product_price_cents,
-            charms: Array.isArray(item.charms)
-              ? item.charms.map((charm: any) => ({
-                  label: typeof charm?.label === 'string' ? charm.label : '',
-                  price_cents: typeof charm?.price_cents === 'number' ? charm.price_cents : 0,
-                })).filter((charm: { label: string; price_cents: number }) => charm.label)
-              : [],
-          }))
+          itemsResponse.data.map((item) => {
+            const rawCharms = Array.isArray(item.charms) ? item.charms : []
+            const normalizedCharms = rawCharms
+              .map((charm) => {
+                if (charm && typeof charm.label === 'string') {
+                  return {
+                    label: charm.label,
+                    price_cents: typeof charm.price_cents === 'number' ? charm.price_cents : 0,
+                  }
+                }
+                return null
+              })
+              .filter((charm): charm is { label: string; price_cents: number } => Boolean(charm && charm.label))
+
+            return {
+              product_name: item.product_name,
+              quantity: item.quantity,
+              product_price_cents: item.product_price_cents,
+              charms: normalizedCharms,
+            }
+          })
         )
       }
       setLoading(false)
