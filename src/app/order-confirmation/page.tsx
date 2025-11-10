@@ -36,23 +36,52 @@ type Order = {
   }
 }
 
+type OrderItem = {
+  product_name: string
+  quantity: number
+  product_price_cents: number
+  charms: Array<{ label: string; price_cents: number }>
+}
+
 function OrderConfirmationContent() {
   const searchParams = useSearchParams()
   const orderId = searchParams.get('id')
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
+  const [items, setItems] = useState<OrderItem[]>([])
 
   useEffect(() => {
     const loadOrder = async () => {
       if (!orderId) return
 
-      const { data } = await supabase
-        .from('orders')
-        .select('id, customer_name, customer_email, total_cents, status, created_at, shipping_method, shipping_cents, shipping_weight_grams, shipping_address')
-        .eq('id', orderId)
-        .single()
+      const [orderResponse, itemsResponse] = await Promise.all([
+        supabase
+          .from('orders')
+          .select('id, customer_name, customer_email, total_cents, status, created_at, shipping_method, shipping_cents, shipping_weight_grams, shipping_address')
+          .eq('id', orderId)
+          .single(),
+        supabase
+          .from('order_items')
+          .select('product_name, quantity, product_price_cents, charms')
+          .eq('order_id', orderId)
+      ])
 
-      if (data) setOrder(data)
+      if (orderResponse.data) setOrder(orderResponse.data)
+      if (itemsResponse.data) {
+        setItems(
+          itemsResponse.data.map((item) => ({
+            product_name: item.product_name,
+            quantity: item.quantity,
+            product_price_cents: item.product_price_cents,
+            charms: Array.isArray(item.charms)
+              ? item.charms.map((charm: any) => ({
+                  label: typeof charm?.label === 'string' ? charm.label : '',
+                  price_cents: typeof charm?.price_cents === 'number' ? charm.price_cents : 0,
+                })).filter((charm: { label: string; price_cents: number }) => charm.label)
+              : [],
+          }))
+        )
+      }
       setLoading(false)
     }
 
@@ -113,6 +142,37 @@ function OrderConfirmationContent() {
 
           {/* Détails de la commande */}
           <div className="p-8 space-y-6">
+            {items.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="font-display text-2xl text-leather">Récapitulatif des articles</h2>
+                <div className="space-y-3">
+                  {items.map((item, index) => (
+                    <div key={`${item.product_name}-${index}`} className="p-4 rounded-2xl border border-gold/20 bg-white/70">
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-leather">{item.product_name}</p>
+                          <p className="text-xs text-taupe">Quantité : {item.quantity}</p>
+                        </div>
+                        <p className="text-sm font-semibold text-leather">
+                          {((item.product_price_cents * item.quantity) / 100).toFixed(2)} €
+                        </p>
+                      </div>
+                      {item.charms.length > 0 && (
+                        <div className="text-xs text-taupe mt-1 space-y-1">
+                          {item.charms.map((charm) => (
+                            <p key={`${index}-${charm.label}`}>
+                              Charm : {charm.label}
+                              {charm.price_cents > 0 && ` (+${(charm.price_cents / 100).toFixed(2)} €)`}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-6">
               <div className="p-4 bg-champagne/10 rounded-xl border border-gold/20">
                 <p className="text-xs uppercase tracking-wider text-taupe mb-2">Numéro de commande</p>

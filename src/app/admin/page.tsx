@@ -38,6 +38,18 @@ const PROTECTED_CATEGORIES = [
 
 const PROTECTED_CATEGORY_SLUGS = PROTECTED_CATEGORIES.map((c) => c.slug.toLowerCase())
 
+const hasCharmsOptions = (raw: any) => {
+  if (!raw) return false
+  if (Array.isArray(raw)) return raw.length > 0
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim()
+    if (!trimmed) return false
+    if (trimmed === '[]') return false
+    return true
+  }
+  return false
+}
+
 // Types pour l'administration
 type Product = {
   id: string
@@ -56,6 +68,7 @@ type Product = {
   preorder_limit?: number | null
   preorder_count?: number
   preorder_available_date?: string | null
+  charms_options?: any
 }
 
 type Category = {
@@ -525,6 +538,12 @@ function ProductsTab({
   onDelete: (productId: string) => void
   onManageImages: (product: Product) => void
 }) {
+  const hasCharmsOptions = (options?: string | null) => {
+    if (!options) return false;
+    const charms = JSON.parse(options);
+    return Array.isArray(charms) && charms.length > 0;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -575,6 +594,11 @@ function ProductsTab({
                     {product.category_id && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-champagne/20 text-leather border border-gold/20">
                         {categories.find(c => c.id === product.category_id)?.name || 'Catégorie'}
+                      </span>
+                    )}
+                    {hasCharmsOptions(product.charms_options) && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gold/20 text-leather border border-gold/30">
+                        Charms disponibles
                       </span>
                     )}
                   </div>
@@ -680,7 +704,7 @@ function OrdersTab() {
   }>>([])
   const [loadingOrders, setLoadingOrders] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null)
-  const [orderItems, setOrderItems] = useState<Array<{ product_name: string; quantity: number; product_price_cents: number }>>([])
+  const [orderItems, setOrderItems] = useState<Array<{ product_name: string; quantity: number; product_price_cents: number; charms: Array<{ label: string; price_cents: number }> }>>([])
 
   useEffect(() => {
     loadOrders()
@@ -699,9 +723,22 @@ function OrdersTab() {
   const loadOrderItems = async (orderId: string) => {
     const { data } = await supabase
       .from('order_items')
-      .select('product_name, quantity, product_price_cents')
+      .select('product_name, quantity, product_price_cents, charms')
       .eq('order_id', orderId)
-    setOrderItems(data || [])
+      .order('created_at', { ascending: true })
+    setOrderItems(
+      (data || []).map((item) => ({
+        product_name: item.product_name,
+        quantity: item.quantity,
+        product_price_cents: item.product_price_cents,
+        charms: Array.isArray(item.charms)
+          ? item.charms.map((charm: any) => ({
+              label: typeof charm?.label === 'string' ? charm.label : '',
+              price_cents: typeof charm?.price_cents === 'number' ? charm.price_cents : 0,
+            })).filter((charm: { label: string; price_cents: number }) => charm.label)
+          : [],
+      }))
+    )
   }
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -903,14 +940,26 @@ function OrdersTab() {
                     <p className="text-xs uppercase tracking-wide text-taupe mb-3">Articles commandés</p>
                     <div className="space-y-2">
                       {orderItems.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gold/20">
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-leather">{item.product_name}</p>
-                            <p className="text-xs text-taupe">Quantité: {item.quantity}</p>
+                        <div key={idx} className="flex flex-col gap-2 p-3 bg-white rounded-lg border border-gold/20">
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <p className="text-sm font-medium text-leather">{item.product_name}</p>
+                              <p className="text-xs text-taupe">Quantité: {item.quantity}</p>
+                            </div>
+                            <p className="text-sm font-semibold text-leather">
+                              {((item.product_price_cents * item.quantity) / 100).toFixed(2)} €
+                            </p>
                           </div>
-                          <p className="text-sm font-semibold text-leather">
-                            {((item.product_price_cents * item.quantity) / 100).toFixed(2)} €
-                          </p>
+                          {item.charms.length > 0 && (
+                            <div className="text-xs text-taupe space-y-1">
+                              {item.charms.map((charm) => (
+                                <p key={`${idx}-${charm.label}`}>
+                                  Charm : {charm.label}
+                                  {charm.price_cents > 0 && ` (+${(charm.price_cents / 100).toFixed(2)} €)`}
+                                </p>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

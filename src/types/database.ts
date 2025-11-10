@@ -30,6 +30,7 @@ export type Product = {
   weight_grams: number | null
   created_at: string
   updated_at: string
+  charms_options?: Array<{ label: string; price_cents: number }> | null
 }
 
 export type ProductWithImages = Product & {

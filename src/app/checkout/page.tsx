@@ -174,12 +174,16 @@ export default function CheckoutPage() {
 
       // Ajouter les articles de la commande
       const orderItems = items.map(item => ({
-        order_id: order.id,
-        product_id: item.productId,
-        product_name: item.name,
-        product_price_cents: Math.round(item.price * 100),
-        quantity: item.quantity,
-      }))
+         order_id: order.id,
+         product_id: item.productId,
+         product_name: item.name,
+         product_price_cents: Math.round(item.price * 100),
+         quantity: item.quantity,
+        charms: item.charms.map((charm) => ({
+          label: charm.label,
+          price_cents: Math.round(charm.price * 100),
+        })),
+       }))
 
       const { error: itemsError } = await supabase
         .from('order_items')
@@ -449,7 +453,18 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-display text-sm text-leather line-clamp-2">{item.name}</h3>
+                        {item.charms.length > 0 && (
+                          <div className="text-xs text-taupe mt-1 space-y-1">
+                            {item.charms.map((charm) => (
+                              <p key={`${item.id}-${charm.label}`}>
+                                Charm : {charm.label}
+                                {charm.price > 0 && ` (+${charm.price.toFixed(2)} €)`}
+                              </p>
+                            ))}
+                          </div>
+                        )}
                         <p className="text-xs text-taupe mt-1">Qté: {item.quantity}</p>
+                        <p className="text-xs text-taupe">Prix unitaire : {item.price.toFixed(2)} €</p>
                         <p className="text-sm font-semibold text-leather mt-1">
                           {(item.price * item.quantity).toFixed(2)} €
                         </p>

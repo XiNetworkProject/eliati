@@ -23,12 +23,57 @@ type Product = {
   preorder_count?: number
   preorder_available_date?: string | null
   updated_at?: string
+  charms_options?: Array<{ label: string; price_cents: number }> | null
 }
 
 type Category = {
   id: string
   name: string
   slug: string
+}
+
+const parseCharmsOptions = (raw: Product['charms_options'] | string | null | undefined) => {
+  if (!raw) return []
+
+  if (Array.isArray(raw)) {
+    return raw
+      .map((option) => ({
+        label: typeof option?.label === 'string' ? option.label : '',
+        price_cents: typeof option?.price_cents === 'number' ? option.price_cents : 0,
+      }))
+      .filter((option) => option.label)
+  }
+
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((option: any) => ({
+            label: typeof option?.label === 'string' ? option.label : '',
+            price_cents: typeof option?.price_cents === 'number' ? option.price_cents : 0,
+          }))
+          .filter((option) => option.label)
+      }
+    } catch (error) {
+      // legacy format fallback handled below
+    }
+
+    return raw
+      .split(/\r?\n|,/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .map((line) => {
+        const [label, pricePart] = line.split('|').map((part) => part.trim())
+        const price = pricePart ? parseFloat(pricePart.replace(',', '.')) : 0
+        return {
+          label,
+          price_cents: Number.isFinite(price) ? Math.round(price * 100) : 0,
+        }
+      })
+  }
+
+  return []
 }
 
 interface ProductFormProps {
@@ -54,9 +99,17 @@ export default function ProductForm({ product, categories, onClose, onSuccess }:
     preorder_limit: product?.preorder_limit || null,
     preorder_count: product?.preorder_count || 0,
     preorder_available_date: product?.preorder_available_date || null,
+    charms_options: parseCharmsOptions(product?.charms_options),
   })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [charms, setCharms] = useState<Array<{ id: string; label: string; price: number }>>(
+    (parseCharmsOptions(product?.charms_options) || []).map((option) => ({
+      id: crypto.randomUUID(),
+      label: option.label,
+      price: option.price_cents / 100,
+    }))
+  )
 
   // Générer le slug automatiquement à partir du nom
   const generateSlug = (name: string) => {
@@ -112,13 +165,26 @@ export default function ProductForm({ product, categories, onClose, onSuccess }:
 
     setLoading(true)
     try {
+      const charmOptionsPayload = charms
+        .filter((field) => field.label.trim().length > 0)
+        .map((field) => ({
+          label: field.label.trim(),
+          price_cents: Math.max(0, Math.round((field.price || 0) * 100)),
+        }))
+
+      const updatePayload = {
+        ...formData,
+        description: formData.description || null,
+        charms_options: charmOptionsPayload.length > 0 ? charmOptionsPayload : null,
+      }
+
       let savedProduct: Product | null = null
 
       if (product?.id) {
         // Mise à jour
         const { data, error } = await supabase
           .from('products')
-          .update(formData)
+          .update(updatePayload)
           .eq('id', product.id)
           .select('*')
           .single()
@@ -129,7 +195,7 @@ export default function ProductForm({ product, categories, onClose, onSuccess }:
         // Création
         const { data, error } = await supabase
           .from('products')
-          .insert([formData])
+          .insert([updatePayload])
           .select('*')
           .single()
 
@@ -210,6 +276,71 @@ export default function ProductForm({ product, categories, onClose, onSuccess }:
                 placeholder="Décrivez votre produit..."
                 className="w-full p-3 border border-gold/30 rounded-lg resize-none h-24"
               />
+            </div>
+
+            {/* Charms */}
+            <div className="space-y-3 p-4 border border-gold/20 rounded-2xl bg-champagne/10">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-leather">Charms disponibles</p>
+                  <p className="text-xs text-taupe">Ajoutez jusqu’à 5 charms (prix en euros, optionnel).</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (charms.length >= 5) return
+                    setCharms((prev) => [...prev, { id: crypto.randomUUID(), label: '', price: 0 }])
+                  }}
+                  disabled={charms.length >= 5}
+                >
+                  + Ajouter
+                </Button>
+              </div>
+
+              {charms.length === 0 && (
+                <p className="text-xs text-taupe">Aucun charm configuré. Laissez vide si le produit n’en propose pas.</p>
+              )}
+
+              <div className="space-y-3">
+                {charms.map((field, index) => (
+                  <div key={field.id} className="grid grid-cols-1 sm:grid-cols-[1fr_auto_auto] gap-3 items-center bg-white/80 p-3 rounded-xl border border-gold/20">
+                    <Input
+                      value={field.label}
+                      placeholder="Ex : Cœur doré"
+                      onChange={(e) => {
+                        const value = e.target.value
+                        setCharms((prev) => prev.map((charm) => charm.id === field.id ? { ...charm, label: value } : charm))
+                      }}
+                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={field.price === 0 ? '' : field.price}
+                        placeholder="Supplément (€)"
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value)
+                          setCharms((prev) => prev.map((charm) => charm.id === field.id ? { ...charm, price: Number.isFinite(value) ? value : 0 } : charm))
+                        }}
+                        className="w-32"
+                      />
+                      <span className="text-xs text-taupe">€</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-red-500 border-red-200 hover:bg-red-50"
+                      onClick={() => setCharms((prev) => prev.filter((charm) => charm.id !== field.id))}
+                    >
+                      Supprimer
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Catégorie */}

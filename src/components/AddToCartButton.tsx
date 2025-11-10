@@ -13,30 +13,38 @@ type AddToCartButtonProps = {
     weight_grams?: number | null
   }
   className?: string
+  selectedCharms?: Array<{ label: string; price: number }>
+  disabled?: boolean
+  onAdded?: () => void
 }
 
-export default function AddToCartButton({ product, className }: AddToCartButtonProps) {
+export default function AddToCartButton({ product, className, selectedCharms = [], disabled, onAdded }: AddToCartButtonProps) {
   const { addItem } = useCart()
   const [added, setAdded] = useState(false)
 
   const handleAddToCart = () => {
     addItem({
-      id: crypto.randomUUID(),
+      basePrice: product.price_cents / 100,
       productId: product.id,
       name: product.name,
       slug: product.slug,
-      price: product.price_cents / 100,
       image: product.image,
       weight: product.weight_grams ?? 0,
+      charms: selectedCharms.map((charm) => ({
+        label: charm.label,
+        price: charm.price,
+      })),
     })
 
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
+    onAdded?.()
   }
 
   return (
     <Button
       onClick={handleAddToCart}
+      disabled={disabled}
       className={`relative overflow-hidden transition-all duration-300 ${
         added
           ? 'bg-gold text-leather hover:bg-gold/90'

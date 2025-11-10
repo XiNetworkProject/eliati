@@ -31,6 +31,7 @@ create table public.products (
   is_sale boolean default false,
   is_featured boolean default false,
   weight_grams integer default 0,
+  charms_options jsonb,
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );
@@ -122,6 +123,7 @@ create table public.order_items (
   product_name text not null, -- Store product name at time of order
   product_price_cents integer not null, -- Store price at time of order
   quantity integer not null,
+  charms jsonb,
   created_at timestamp with time zone default now()
 );
 

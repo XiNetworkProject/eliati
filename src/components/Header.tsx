@@ -55,9 +55,21 @@ export default function Header() {
               ))}
 
               <Link
+                href="/info/charms-personnalises"
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 border shadow-sm',
+                  pathname === '/info/charms-personnalises'
+                    ? 'bg-gold text-leather border-gold shadow-gold/40'
+                    : 'bg-white text-leather border-gold/30 hover:border-gold/60 hover:shadow-md'
+                )}
+              >
+                Charms personnalisés
+              </Link>
+
+              <Link
                 href="/new"
                 className={cn(
-                  'ml-4 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 border',
+                  'ml-1 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 border',
                   pathname === '/new'
                     ? 'bg-leather text-ivory border-leather shadow-lg shadow-leather/30'
                     : 'bg-gradient-to-r from-gold/20 to-rose/20 text-leather border-gold/40 hover:from-gold/40 hover:to-rose/40 hover:shadow-lg hover:shadow-gold/20'
@@ -129,6 +141,19 @@ export default function Header() {
             </Link>
           ))}
         </nav>
+
+        <Link
+          href="/info/charms-personnalises"
+          onClick={() => setIsMenuOpen(false)}
+          className={cn(
+            'px-4 py-3 rounded-xl text-sm font-semibold text-center transition-all duration-200 border',
+            pathname === '/info/charms-personnalises'
+              ? 'bg-gold text-leather border-gold shadow-gold/40'
+              : 'bg-white text-leather border-gold/30 hover:border-gold/60 hover:shadow-md'
+          )}
+        >
+          Charms personnalisés
+        </Link>
 
         <Link
           href="/new"

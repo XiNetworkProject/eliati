@@ -1,9 +1,8 @@
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { supabase } from '@/lib/supabase'
-import AddToCartButton from '@/components/AddToCartButton'
-import { Badge } from '@/components/ui/badge'
 import ProductGallery from '@/components/ProductGallery'
+import ProductConfigurator from '@/components/ProductConfigurator'
 
 export default async function ProductPage({
   params,
@@ -32,15 +31,6 @@ export default async function ProductPage({
     )
   }
 
-  const price = (product.price_cents / 100).toFixed(2).replace('.', ',')
-  const comparePrice = product.compare_at_cents
-    ? (product.compare_at_cents / 100).toFixed(2).replace('.', ',')
-    : null
-
-  const onSale =
-    product.compare_at_cents &&
-    product.compare_at_cents > product.price_cents
-
   const sortedImages = Array.isArray(product.product_images)
     ? [...product.product_images].sort(
         (a: { sort_order?: number | null }, b: { sort_order?: number | null }) =>
@@ -49,6 +39,53 @@ export default async function ProductPage({
     : []
 
   const primaryImage = sortedImages[0]?.url ?? product.product_images?.[0]?.url ?? '/placeholder.jpg'
+
+  const parseCharmOptions = (): Array<{ label: string; price_cents: number }> => {
+    const raw = product.charms_options
+    if (!raw) return []
+
+    if (Array.isArray(raw)) {
+      return raw
+        .map((option: any) => ({
+          label: typeof option?.label === 'string' ? option.label : '',
+          price_cents: typeof option?.price_cents === 'number' ? option.price_cents : 0,
+        }))
+        .filter((option) => option.label)
+    }
+
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+          return parsed
+            .map((option: any) => ({
+              label: typeof option?.label === 'string' ? option.label : '',
+              price_cents: typeof option?.price_cents === 'number' ? option.price_cents : 0,
+            }))
+            .filter((option) => option.label)
+        }
+      } catch (error) {
+        // ignore JSON error, fallback to legacy format
+      }
+
+      return raw
+        .split(/\r?\n|,/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
+        .map((line) => {
+          const [label, pricePart] = line.split('|').map((part) => part.trim())
+          const price = pricePart ? parseFloat(pricePart.replace(',', '.')) : 0
+          return {
+            label,
+            price_cents: Number.isFinite(price) ? Math.round(price * 100) : 0,
+          }
+        })
+    }
+
+    return []
+  }
+
+  const charmOptions = parseCharmOptions()
 
   return (
     <div>
@@ -61,104 +98,26 @@ export default async function ProductPage({
             images={sortedImages}
           />
 
-          {/* Informations produit */}
-          <div className="space-y-6">
-            {product.categories && (
-              <Badge className="bg-champagne text-leather">
-                {product.categories.name}
-              </Badge>
-            )}
-
-            <h1 className="font-display text-4xl text-leather">
-              {product.name}
-            </h1>
-
-            {product.description && (
-              <p className="text-taupe leading-relaxed">
-                {product.description}
-              </p>
-            )}
-
-            <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-semibold text-leather">
-                {price} €
-              </span>
-              {comparePrice && onSale && (
-                <>
-                  <span className="text-xl text-taupe line-through">
-                    {comparePrice} €
-                  </span>
-                  <Badge className="bg-rose text-leather">Promo</Badge>
-                </>
-              )}
-            </div>
-
-            {/* Gestion stock et précommande */}
-            {product.stock_status === 'out_of_stock' ? (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-center">
-                <p className="text-red-700 font-medium">Rupture de stock</p>
-                <p className="text-red-600 text-sm mt-1">Ce produit n&apos;est plus disponible pour le moment</p>
-              </div>
-            ) : product.stock_status === 'preorder' ? (
-              <>
-                <div className="p-4 bg-gold/10 border border-gold/30 rounded-xl mb-4">
-                  <p className="text-leather font-medium mb-1">📅 Précommande - Édition limitée</p>
-                  <p className="text-taupe text-sm">
-                    Plus que {(product.preorder_limit || 0) - (product.preorder_count || 0)} places disponibles sur {product.preorder_limit} !
-                  </p>
-                  {product.preorder_available_date && (
-                    <p className="text-taupe text-xs mt-2">
-                      Disponible le {new Date(product.preorder_available_date).toLocaleDateString('fr-FR')}
-                    </p>
-                  )}
-                </div>
-                {(product.preorder_count || 0) < (product.preorder_limit || 0) ? (
-                  <AddToCartButton
-                    product={{
-                      id: product.id,
-                      name: product.name,
-                      slug: product.slug,
-                      price_cents: product.price_cents,
-                      image: primaryImage,
-                      weight_grams: product.weight_grams ?? 0,
-                    }}
-                    className="w-full"
-                  />
-                ) : (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-center">
-                    <p className="text-red-700 font-medium">Précommandes complètes</p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                {product.stock_quantity !== null && product.stock_quantity !== undefined && (
-                  <div className={`p-3 rounded-xl mb-3 ${product.stock_status === 'low_stock' ? 'bg-orange-50 border border-orange-200' : 'bg-green-50 border border-green-200'}`}>
-                    <p className={`text-sm font-medium ${product.stock_status === 'low_stock' ? 'text-orange-700' : 'text-green-700'}`}>
-                      {product.stock_status === 'low_stock' ? '⚠️ Plus que' : '✓'} {product.stock_quantity} en stock
-                    </p>
-                  </div>
-                )}
-                <AddToCartButton
-                  product={{
-                    id: product.id,
-                    name: product.name,
-                    slug: product.slug,
-                    price_cents: product.price_cents,
-                    image: primaryImage,
-                    weight_grams: product.weight_grams ?? 0,
-                  }}
-                  className="w-full"
-                />
-              </>
-            )}
-
-            <div className="border-t border-gold/30 pt-6 space-y-2 text-sm text-taupe">
-              <p>✓ Livraison offerte dès 50€</p>
-              <p>✓ Retours gratuits sous 30 jours</p>
-              <p>✓ Garantie 2 ans</p>
-            </div>
-          </div>
+          {/* Informations produit + personnalisation */}
+          <ProductConfigurator
+            product={{
+              id: product.id,
+              name: product.name,
+              slug: product.slug,
+              description: product.description,
+              price_cents: product.price_cents,
+              compare_at_cents: product.compare_at_cents,
+              stock_status: product.stock_status,
+              stock_quantity: product.stock_quantity,
+              preorder_limit: product.preorder_limit,
+              preorder_count: product.preorder_count,
+              preorder_available_date: product.preorder_available_date,
+              weight_grams: product.weight_grams,
+            }}
+            categoryName={product.categories?.name}
+            charmOptions={charmOptions}
+            primaryImage={primaryImage}
+          />
         </div>
       </main>
       <Footer />

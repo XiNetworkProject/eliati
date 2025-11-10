@@ -127,14 +127,27 @@ export default function CartPage() {
                           {item.name}
                         </h3>
                       </Link>
-                      <p className="text-taupe text-sm mb-4">Prix unitaire: {item.price.toFixed(2)} €</p>
+                      {item.charms.length > 0 && (
+                        <div className="text-xs text-taupe space-y-1 mb-3">
+                          {item.charms.map((charm) => (
+                            <p key={`${item.id}-${charm.label}`}>
+                              Charm : {charm.label}
+                              {charm.price > 0 && ` (+${charm.price.toFixed(2)} €)`}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-taupe text-sm mb-1">Prix unitaire : {item.price.toFixed(2)} €</p>
+                      {item.charms.length > 0 && (
+                        <p className="text-xs text-taupe">Dont charm(s) : +{item.charms.reduce((sum, charm) => sum + charm.price, 0).toFixed(2)} €</p>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-4">
                       {/* Sélecteur de quantité élégant */}
                       <div className="flex items-center bg-champagne/10 border border-gold/30 rounded-xl overflow-hidden">
                         <button
-                          onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           className="px-4 py-2.5 hover:bg-champagne/30 transition-colors"
                         >
                           <svg className="w-4 h-4 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,7 +156,7 @@ export default function CartPage() {
                         </button>
                         <span className="px-6 py-2.5 text-sm font-semibold text-leather min-w-[3rem] text-center">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           className="px-4 py-2.5 hover:bg-champagne/30 transition-colors"
                         >
                           <svg className="w-4 h-4 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,7 +167,7 @@ export default function CartPage() {
 
                       {/* Bouton supprimer */}
                       <button
-                        onClick={() => removeItem(item.productId)}
+                        onClick={() => removeItem(item.id)}
                         className="p-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-200"
                         title="Supprimer"
                       >

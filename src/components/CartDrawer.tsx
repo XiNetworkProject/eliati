@@ -95,7 +95,18 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             {item.name}
                           </h3>
                         </Link>
-                        <p className="text-xs text-taupe mb-2">Qté: {item.quantity}</p>
+                        <p className="text-xs text-taupe">Qté : {item.quantity}</p>
+                        {item.charms.length > 0 && (
+                          <div className="text-xs text-taupe mt-1 space-y-1">
+                            {item.charms.map((charm) => (
+                              <p key={`${item.id}-${charm.label}`}>
+                                Charm : {charm.label}
+                                {charm.price > 0 && ` (+${charm.price.toFixed(2)} €)`}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                        <p className="text-sm text-taupe mt-2">Prix unitaire : {item.price.toFixed(2)} €</p>
                         <p className="text-base font-semibold text-leather">
                           {(item.price * item.quantity).toFixed(2)} €
                         </p>
@@ -103,7 +114,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     </div>
 
                     <button
-                      onClick={() => removeItem(item.productId)}
+                      onClick={() => removeItem(item.id)}
                       className="flex-shrink-0 p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all h-fit"
                       title="Supprimer"
                     >

@@ -29,6 +29,11 @@ export default function Footer() {
                 </a>
               </li>
               <li>
+                <a href="/info/charms-personnalises" className="text-taupe hover:text-leather">
+                  Charms personnalisés
+                </a>
+              </li>
+              <li>
                 <a href="/mentions-legales" className="text-taupe hover:text-leather">
                   Mentions légales
                 </a>
