@@ -5,6 +5,7 @@ import Link from 'next/link'
 import ProductGallery, { ProductGalleryImage } from '@/components/ProductGallery'
 import ProductConfigurator from '@/components/ProductConfigurator'
 import ProductReviews from '@/components/ProductReviews'
+import ProductRecommendations from '@/components/ProductRecommendations'
 
 type ProductData = {
   id: string
@@ -32,6 +33,7 @@ type ProductVariant = {
 
 type ProductPageClientProps = {
   product: ProductData
+  categoryId: string | null
   categoryName: string | null
   charmOptions: Array<{ label: string; price_cents: number }>
   images: ProductGalleryImage[]
@@ -41,6 +43,7 @@ type ProductPageClientProps = {
 
 export default function ProductPageClient({
   product,
+  categoryId,
   categoryName,
   charmOptions,
   images,
@@ -177,6 +180,15 @@ export default function ProductPageClient({
       {/* Reviews section */}
       <div className="pt-12 border-t border-gold/20">
         <ProductReviews productId={product.id} productName={product.name} />
+      </div>
+
+      {/* Recommendations section */}
+      <div className="pt-12 border-t border-gold/20">
+        <ProductRecommendations
+          productId={product.id}
+          categoryId={categoryId}
+          categoryName={categoryName}
+        />
       </div>
     </div>
   )
