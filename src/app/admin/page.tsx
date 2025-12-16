@@ -9,6 +9,7 @@ import ProductForm from '@/components/admin/ProductForm'
 import ProductImages from '@/components/admin/ProductImages'
 import ProductVariants from '@/components/admin/ProductVariants'
 import PromoCodesManager from '@/components/admin/PromoCodesManager'
+import ReviewsManager from '@/components/admin/ReviewsManager'
 import PayPalSettings from '@/components/admin/PayPalSettings'
 import CarouselManager from '@/components/admin/CarouselManager'
 import CategoryManager from '@/components/admin/CategoryManager'
@@ -299,6 +300,7 @@ function AdminDashboard() {
     { id: 'categories', label: 'Catégories' },
     { id: 'carousel', label: 'Carousel' },
     { id: 'promos', label: 'Codes Promo' },
+    { id: 'reviews', label: 'Avis' },
     { id: 'orders', label: 'Commandes' },
     { id: 'analytics', label: 'Statistiques' },
     { id: 'settings', label: 'Paramètres' },
@@ -416,6 +418,7 @@ function AdminDashboard() {
           )}
           {activeTab === 'carousel' && <CarouselManager />}
           {activeTab === 'promos' && <PromoCodesManager />}
+          {activeTab === 'reviews' && <ReviewsManager />}
           {activeTab === 'orders' && <OrdersTab />}
           {activeTab === 'analytics' && <AnalyticsTab />}
           {activeTab === 'settings' && <PayPalSettings />}

@@ -4,6 +4,7 @@ import { useState, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import ProductGallery, { ProductGalleryImage } from '@/components/ProductGallery'
 import ProductConfigurator from '@/components/ProductConfigurator'
+import ProductReviews from '@/components/ProductReviews'
 
 type ProductData = {
   id: string
@@ -171,6 +172,11 @@ export default function ProductPageClient({
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Reviews section */}
+      <div className="pt-12 border-t border-gold/20">
+        <ProductReviews productId={product.id} productName={product.name} />
       </div>
     </div>
   )

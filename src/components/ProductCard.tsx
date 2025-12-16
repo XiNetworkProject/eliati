@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
 
 export type Product = {
   id: string
@@ -14,9 +15,34 @@ export type Product = {
   is_new?: boolean
 }
 
+// Mini composant pour les étoiles
+function MiniStars({ rating }: { rating: number }) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <svg
+          key={star}
+          className={`w-3 h-3 ${star <= rating ? 'text-gold fill-gold' : 'text-gold/30'}`}
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={1.5}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+            fill={star <= rating ? 'currentColor' : 'none'}
+          />
+        </svg>
+      ))}
+    </div>
+  )
+}
+
 export default function ProductCard({ p, index = 0 }: { p: Product; index?: number }) {
   const [isHovered, setIsHovered] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [rating, setRating] = useState<{ average: number; count: number } | null>(null)
   
   const price = (p.price_cents / 100).toFixed(2).replace('.', ',')
   const compare = p.compare_at_cents
@@ -27,6 +53,23 @@ export default function ProductCard({ p, index = 0 }: { p: Product; index?: numb
   const discount = hasPromo 
     ? Math.round((1 - p.price_cents / (p.compare_at_cents || 1)) * 100)
     : 0
+
+  // Charger la note moyenne
+  useEffect(() => {
+    const fetchRating = async () => {
+      const { data } = await supabase
+        .from('reviews')
+        .select('rating')
+        .eq('product_id', p.id)
+        .eq('is_approved', true)
+
+      if (data && data.length > 0) {
+        const avg = data.reduce((sum, r) => sum + r.rating, 0) / data.length
+        setRating({ average: avg, count: data.length })
+      }
+    }
+    fetchRating()
+  }, [p.id])
 
   return (
     <Link
@@ -90,6 +133,14 @@ export default function ProductCard({ p, index = 0 }: { p: Product; index?: numb
           <h3 className="font-display text-lg text-leather line-clamp-2 group-hover:text-gold transition-colors duration-300">
             {p.name}
           </h3>
+
+          {/* Rating */}
+          {rating && (
+            <div className="flex items-center gap-1.5">
+              <MiniStars rating={Math.round(rating.average)} />
+              <span className="text-xs text-taupe">({rating.count})</span>
+            </div>
+          )}
           
           <div className="flex items-baseline gap-2">
             <span className={`text-lg font-semibold ${hasPromo ? 'text-mauve' : 'text-leather'}`}>
