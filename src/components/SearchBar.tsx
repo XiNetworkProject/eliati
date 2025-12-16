@@ -47,14 +47,18 @@ export default function SearchBar({ onClose, autoFocus = false, variant = 'heade
         .ilike('name', `%${searchQuery}%`)
         .limit(6)
 
-      const mapped: SearchResult[] = (data || []).map((p) => ({
-        id: p.id,
-        name: p.name,
-        slug: p.slug,
-        price_cents: p.price_cents,
-        image_url: p.product_images?.[0]?.url || null,
-        category_name: p.categories?.name || null,
-      }))
+      const mapped: SearchResult[] = (data || []).map((p) => {
+        // categories peut être un objet ou un tableau selon la relation
+        const category = Array.isArray(p.categories) ? p.categories[0] : p.categories
+        return {
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          price_cents: p.price_cents,
+          image_url: p.product_images?.[0]?.url || null,
+          category_name: category?.name || null,
+        }
+      })
 
       setResults(mapped)
     } catch (error) {
