@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Logo from './Logo'
 import CartDrawer from './CartDrawer'
+import SearchBar from './SearchBar'
 import { useCart } from '@/contexts/CartContext'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +20,7 @@ export default function Header() {
   const { itemCount } = useCart()
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
 
   useEffect(() => {
@@ -27,6 +29,17 @@ export default function Header() {
     }
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Fermer la recherche avec Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
   return (
@@ -101,7 +114,18 @@ export default function Header() {
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Search button */}
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-champagne/20 transition-all duration-300 border border-transparent hover:border-gold/30"
+              aria-label="Rechercher"
+            >
+              <svg className="w-5 h-5 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+
             {/* Mobile menu button */}
             <button
               className="lg:hidden relative w-10 h-10 flex items-center justify-center rounded-xl border border-gold/20 text-leather hover:bg-champagne/20 transition-all duration-300"
@@ -155,6 +179,43 @@ export default function Header() {
         </div>
       </header>
 
+      {/* Search overlay */}
+      <div
+        className={cn(
+          'fixed inset-0 z-50 bg-leather/50 backdrop-blur-sm transition-all duration-300',
+          isSearchOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
+        )}
+        onClick={() => setIsSearchOpen(false)}
+      >
+        <div 
+          className={cn(
+            'absolute top-0 left-0 right-0 bg-ivory p-6 shadow-2xl transition-all duration-500',
+            isSearchOpen ? 'translate-y-0' : '-translate-y-full'
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="mx-auto max-w-2xl">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex-1">
+                <SearchBar onClose={() => setIsSearchOpen(false)} autoFocus={isSearchOpen} />
+              </div>
+              <button
+                onClick={() => setIsSearchOpen(false)}
+                className="p-3 rounded-xl hover:bg-champagne/20 transition-colors"
+                aria-label="Fermer"
+              >
+                <svg className="w-6 h-6 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-sm text-taupe text-center">
+              Appuyez sur <kbd className="px-2 py-0.5 bg-champagne/30 rounded text-xs font-mono">Entrée</kbd> pour rechercher
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Mobile menu overlay */}
       <div
         className={cn(
@@ -179,10 +240,15 @@ export default function Header() {
             className="w-10 h-10 flex items-center justify-center rounded-xl border border-gold/20 hover:bg-champagne/20 transition-all duration-300"
             aria-label="Fermer le menu"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+        </div>
+
+        {/* Search in mobile menu */}
+        <div className="p-4 border-b border-gold/20">
+          <SearchBar onClose={() => setIsMenuOpen(false)} />
         </div>
 
         {/* Navigation */}
