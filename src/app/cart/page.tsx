@@ -2,7 +2,6 @@
 import { useMemo, useState } from 'react'
 import { useCart } from '@/contexts/CartContext'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -64,26 +63,26 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-ivory via-champagne/10 to-rose/5">
+      <div className="min-h-screen gradient-hero">
         <Header />
-        <main className="mx-auto max-w-6xl px-4 py-16">
-          <Card className="p-16 text-center bg-white/80 backdrop-blur-sm border-gold/20 shadow-lg">
-            <div className="w-32 h-32 mx-auto mb-8 rounded-3xl bg-gradient-to-br from-champagne/30 to-champagne/10 border border-gold/30 flex items-center justify-center">
-              <svg className="w-16 h-16 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <main className="mx-auto max-w-6xl px-4 py-20">
+          <div className="max-w-lg mx-auto text-center animate-fade-in-up">
+            <div className="w-32 h-32 mx-auto mb-8 rounded-full bg-gradient-to-br from-champagne/50 to-rose/30 border border-gold/30 flex items-center justify-center animate-float">
+              <svg className="w-16 h-16 text-leather/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
             </div>
-            <h1 className="font-display text-4xl text-leather mb-4">Votre panier est vide</h1>
-            <p className="text-taupe mb-10 text-lg">Découvrez nos créations et ajoutez-les à votre panier</p>
+            <h1 className="font-display text-4xl sm:text-5xl text-leather mb-4">Votre panier est vide</h1>
+            <p className="text-taupe text-lg mb-10">Découvrez nos créations uniques et trouvez le bijou qui vous ressemble</p>
             <Link href="/">
-              <Button className="bg-leather text-ivory hover:bg-leather/90 px-8 py-6 text-lg">
+              <Button className="btn-premium bg-leather text-ivory hover:bg-leather/90 px-8 py-6 text-lg rounded-full shadow-lg shadow-leather/20">
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
                 Découvrir la collection
               </Button>
             </Link>
-          </Card>
+          </div>
         </main>
         <Footer />
       </div>
@@ -91,20 +90,28 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-ivory via-champagne/10 to-rose/5">
+    <div className="min-h-screen bg-ivory">
       <Header />
-      <main className="mx-auto max-w-7xl px-4 py-12">
-        <h1 className="font-display text-4xl text-leather mb-10">Mon panier</h1>
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:py-12">
+        {/* Header */}
+        <div className="mb-10 animate-fade-in">
+          <h1 className="font-display text-4xl sm:text-5xl text-leather mb-2">Mon panier</h1>
+          <p className="text-taupe">{items.length} article{items.length > 1 ? 's' : ''} dans votre panier</p>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Liste des produits */}
+          {/* Products list */}
           <div className="lg:col-span-2 space-y-4">
-            {items.map((item) => (
-              <Card key={item.id} className="group overflow-hidden bg-white/90 backdrop-blur-sm border-gold/20 hover:shadow-lg transition-all duration-300">
-                <div className="p-6 flex gap-6">
-                  {/* Image produit */}
-                  <Link href={`/product/${item.slug}`} className="flex-shrink-0">
-                    <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-champagne/40 to-champagne/20 border border-gold/30 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+            {items.map((item, index) => (
+              <div 
+                key={item.id} 
+                className="group card-elegant p-4 sm:p-6 animate-fade-in-up"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="flex gap-4 sm:gap-6">
+                  {/* Product image */}
+                  <Link href={`/product/${item.productId}`} className="flex-shrink-0">
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-gradient-to-br from-champagne/30 to-rose/20 border border-gold/20 overflow-hidden img-zoom">
                       {item.image ? (
                         <Image
                           src={item.image}
@@ -114,56 +121,62 @@ export default function CartPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gold/40 to-gold/20" />
+                        <div className="w-full h-full flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold/30 to-gold/10" />
+                        </div>
                       )}
                     </div>
                   </Link>
 
-                  {/* Informations produit */}
-                  <div className="flex-1 min-w-0 flex flex-col justify-between">
-                    <div>
-                      <Link href={`/product/${item.slug}`}>
-                        <h3 className="font-display text-xl text-leather hover:text-gold transition-colors mb-2">
-                          {item.name}
-                        </h3>
-                      </Link>
-                      {/* Coloris sélectionné */}
+                  {/* Product info */}
+                  <div className="flex-1 min-w-0">
+                    <Link href={`/product/${item.productId}`}>
+                      <h3 className="font-display text-lg sm:text-xl text-leather hover:text-gold transition-colors line-clamp-2">
+                        {item.name}
+                      </h3>
+                    </Link>
+                    
+                    {/* Options */}
+                    <div className="mt-2 space-y-1">
                       {item.color && (
-                        <p className="text-xs text-leather font-medium mb-2">
+                        <p className="text-sm text-leather">
                           <span className="text-taupe">Coloris :</span> {item.color}
                         </p>
                       )}
                       {item.charms.length > 0 && (
-                        <div className="text-xs text-taupe space-y-1 mb-3">
+                        <div className="flex flex-wrap gap-1.5">
                           {item.charms.map((charm) => (
-                            <p key={`${item.id}-${charm.label}`}>
-                              Charm : {charm.label}
-                              {charm.price > 0 && ` (+${charm.price.toFixed(2)} €)`}
-                            </p>
+                            <span 
+                              key={`${item.id}-${charm.label}`}
+                              className="inline-flex items-center px-2 py-0.5 rounded-full bg-champagne/30 text-xs text-leather border border-gold/20"
+                            >
+                              ✨ {charm.label}
+                            </span>
                           ))}
                         </div>
                       )}
-                      <p className="text-taupe text-sm mb-1">Prix unitaire : {item.price.toFixed(2)} €</p>
-                      {item.charms.length > 0 && (
-                        <p className="text-xs text-taupe">Dont charm(s) : +{item.charms.reduce((sum, charm) => sum + charm.price, 0).toFixed(2)} €</p>
-                      )}
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      {/* Sélecteur de quantité élégant */}
-                      <div className="flex items-center bg-champagne/10 border border-gold/30 rounded-xl overflow-hidden">
+                    {/* Price */}
+                    <p className="mt-2 text-sm text-taupe">
+                      {item.price.toFixed(2)} € / unité
+                    </p>
+
+                    {/* Quantity & Remove - Mobile friendly */}
+                    <div className="flex items-center gap-3 mt-4">
+                      <div className="flex items-center rounded-full border border-gold/30 bg-white overflow-hidden">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="px-4 py-2.5 hover:bg-champagne/30 transition-colors"
+                          className="w-9 h-9 flex items-center justify-center hover:bg-champagne/30 transition-colors"
                         >
                           <svg className="w-4 h-4 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                           </svg>
                         </button>
-                        <span className="px-6 py-2.5 text-sm font-semibold text-leather min-w-[3rem] text-center">{item.quantity}</span>
+                        <span className="w-10 text-center text-sm font-semibold text-leather">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="px-4 py-2.5 hover:bg-champagne/30 transition-colors"
+                          className="w-9 h-9 flex items-center justify-center hover:bg-champagne/30 transition-colors"
                         >
                           <svg className="w-4 h-4 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -171,59 +184,69 @@ export default function CartPage() {
                         </button>
                       </div>
 
-                      {/* Bouton supprimer */}
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="p-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-200"
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
                         title="Supprimer"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>
+
+                      {/* Line total - right aligned */}
+                      <div className="ml-auto text-right">
+                        <p className="text-xl font-semibold text-leather">
+                          {(item.price * item.quantity).toFixed(2)} €
+                        </p>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Prix total de la ligne */}
-                  <div className="flex flex-col justify-between items-end">
-                    <p className="text-2xl font-semibold text-leather">
-                      {(item.price * item.quantity).toFixed(2)} €
-                    </p>
-                  </div>
                 </div>
-              </Card>
+              </div>
             ))}
+
+            {/* Continue shopping */}
+            <Link href="/" className="inline-flex items-center gap-2 text-leather hover:text-gold transition-colors mt-4">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Continuer mes achats
+            </Link>
           </div>
 
-          {/* Résumé de commande */}
+          {/* Order summary */}
           <div className="lg:col-span-1">
-            <Card className="overflow-hidden bg-white/90 backdrop-blur-sm border-gold/20 sticky top-4 shadow-lg">
-              <div className="bg-gradient-to-br from-champagne/20 to-rose/10 p-6 border-b border-gold/20">
+            <div className="card-elegant sticky top-24 overflow-hidden animate-fade-in-up stagger-2">
+              {/* Header */}
+              <div className="bg-gradient-to-br from-champagne/30 to-rose/10 p-6 border-b border-gold/20">
                 <h2 className="font-display text-2xl text-leather">Résumé</h2>
               </div>
 
               <div className="p-6 space-y-6">
-                {/* Code promo */}
+                {/* Promo code */}
                 <div className="pb-6 border-b border-gold/20">
-                  <label className="block text-sm font-medium text-leather mb-3 uppercase tracking-wide">
+                  <label className="block text-sm font-medium text-leather mb-3">
                     Code promo
                   </label>
                   {promoCode ? (
-                    <div className="flex items-center justify-between p-4 bg-gradient-to-br from-gold/10 to-gold/5 border border-gold/30 rounded-xl">
-                      <div>
-                        <p className="text-sm font-bold text-leather tracking-wide">{promoCode.code}</p>
-                        <p className="text-xs text-taupe mt-1">
-                          -{promoCode.discountType === 'percentage'
-                            ? `${promoCode.discountValue}%`
-                            : `${promoCode.discountValue.toFixed(2)} €`}
-                        </p>
+                    <div className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-green-50 to-green-100/50 border border-green-200">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">🎉</span>
+                        <div>
+                          <p className="font-bold text-green-800">{promoCode.code}</p>
+                          <p className="text-xs text-green-600">
+                            -{promoCode.discountType === 'percentage'
+                              ? `${promoCode.discountValue}%`
+                              : `${promoCode.discountValue.toFixed(2)} €`}
+                          </p>
+                        </div>
                       </div>
                       <button
                         onClick={removePromoCode}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Retirer le code"
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-full transition-colors"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
@@ -233,88 +256,105 @@ export default function CartPage() {
                       <Input
                         value={promoCodeInput}
                         onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
-                        placeholder="ELIGOLD20"
-                        className="flex-1 border-gold/30"
+                        placeholder="Votre code"
+                        className="flex-1 rounded-xl border-gold/30 focus:border-gold focus:ring-gold/20"
                         onKeyDown={(e) => e.key === 'Enter' && handleApplyPromo()}
                       />
                       <Button
                         onClick={handleApplyPromo}
                         disabled={loadingPromo || !promoCodeInput.trim()}
-                        className="bg-leather text-ivory hover:bg-leather/90 px-6"
+                        className="bg-leather text-ivory hover:bg-leather/90 rounded-xl px-5"
                       >
                         {loadingPromo ? '...' : 'OK'}
                       </Button>
                     </div>
                   )}
                   {promoMessage && (
-                    <div className={`text-xs mt-3 p-2 rounded-lg ${promoMessage.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                    <div className={`text-sm mt-3 p-3 rounded-xl ${
+                      promoMessage.type === 'success' 
+                        ? 'bg-green-50 text-green-700 border border-green-200' 
+                        : 'bg-red-50 text-red-700 border border-red-200'
+                    }`}>
                       {promoMessage.text}
                     </div>
                   )}
                 </div>
 
-                {/* Détail des prix */}
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
+                {/* Price details */}
+                <div className="space-y-3">
+                  <div className="flex justify-between">
                     <span className="text-taupe">Sous-total</span>
-                    <span className="text-leather font-semibold text-lg">{subtotal.toFixed(2)} €</span>
+                    <span className="text-leather font-medium">{subtotal.toFixed(2)} €</span>
                   </div>
+                  
                   {discount > 0 && (
-                    <div className="flex justify-between items-center p-3 bg-green-50 rounded-xl border border-green-200">
+                    <div className="flex justify-between p-3 rounded-xl bg-green-50 border border-green-200">
                       <span className="text-green-700 font-medium">Réduction</span>
-                      <span className="text-green-700 font-bold text-lg">-{discount.toFixed(2)} €</span>
+                      <span className="text-green-700 font-bold">-{discount.toFixed(2)} €</span>
                     </div>
                   )}
-                  <div className="flex justify-between items-start text-sm">
-                    <span className="text-taupe">Livraison</span>
-                    <span className="text-right text-taupe">
-                      {bestOption.label}
-                      <span className="block text-leather font-medium text-base">{estimatedShipping.toFixed(2)} €</span>
-                      <span className="block text-xs italic">{bestOption.description}</span>
-                      {bestOption.freeAbove && (
-                        <span className="block text-xs text-green-700 mt-1">
-                          Livraison offerte dès {bestOption.freeAbove.toFixed(0)} €
-                        </span>
+                  
+                  <div className="flex justify-between text-sm">
+                    <div>
+                      <span className="text-taupe">Livraison estimée</span>
+                      <p className="text-xs text-taupe/70">{bestOption.label}</p>
+                    </div>
+                    <div className="text-right">
+                      {estimatedShipping === 0 ? (
+                        <span className="text-green-600 font-medium">Offerte !</span>
+                      ) : (
+                        <span className="text-leather font-medium">{estimatedShipping.toFixed(2)} €</span>
                       )}
-                      {(totalWeight ?? 0) > 0 && (
-                        <span className="block text-xs text-taupe/80 mt-1">
-                          Poids estimé : {(totalWeight / 1000).toFixed(2)} kg • Tranche ≤ {(bestBracket.max === Number.MAX_SAFE_INTEGER ? '30 kg' : `${(bestBracket.max / 1000).toFixed(bestBracket.max >= 1000 ? 1 : 3)} kg`)}
-                        </span>
+                      {bestOption.freeAbove && estimatedShipping > 0 && (
+                        <p className="text-xs text-green-600">
+                          Offerte dès {bestOption.freeAbove} €
+                        </p>
                       )}
-                    </span>
+                    </div>
                   </div>
+
+                  {(totalWeight ?? 0) > 0 && (
+                    <p className="text-xs text-taupe/70 text-right">
+                      Poids : {(totalWeight / 1000).toFixed(2)} kg
+                      {bestBracket.max !== Number.MAX_SAFE_INTEGER && ` (tranche ≤ ${(bestBracket.max / 1000).toFixed(1)} kg)`}
+                    </p>
+                  )}
                 </div>
 
                 {/* Total */}
                 <div className="pt-6 border-t-2 border-gold/30">
                   <div className="flex justify-between items-center mb-6">
                     <span className="font-display text-xl text-leather">Total</span>
-                    <span className="font-display text-3xl text-leather">{total.toFixed(2)} €</span>
+                    <span className="font-display text-3xl text-leather">{(total + estimatedShipping).toFixed(2)} €</span>
                   </div>
 
-                  {/* Boutons */}
-                  <div className="space-y-3">
-                    <Link href="/checkout">
-                      <Button className="w-full bg-leather text-ivory hover:bg-leather/90 h-14 text-lg font-medium">
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        Procéder au paiement
-                      </Button>
-                    </Link>
+                  <Link href="/checkout">
+                    <Button className="w-full btn-premium bg-leather text-ivory hover:bg-leather/90 h-14 text-lg font-medium rounded-2xl shadow-lg shadow-leather/20">
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      Passer commande
+                    </Button>
+                  </Link>
+                </div>
 
-                    <Link href="/">
-                      <Button variant="outline" className="w-full border-leather/20 h-12">
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Continuer mes achats
-                      </Button>
-                    </Link>
+                {/* Trust badges */}
+                <div className="pt-4 space-y-2 text-xs text-taupe">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600">✓</span>
+                    Paiement 100% sécurisé
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600">✓</span>
+                    Satisfait ou remboursé 30 jours
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-600">✓</span>
+                    Livraison soignée
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
         </div>
       </main>

@@ -10,37 +10,38 @@ type CartDrawerProps = {
 }
 
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const { items, itemCount, total, removeItem } = useCart()
+  const { items, itemCount, total, subtotal, discount, updateQuantity, removeItem } = useCart()
 
   return (
     <>
       {/* Overlay */}
       <div
-        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-50 transition-all duration-300 ${
-          isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+        className={`fixed inset-0 bg-leather/40 backdrop-blur-sm z-50 transition-all duration-500 ${
+          isOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
         }`}
         onClick={onClose}
       />
 
       {/* Drawer */}
-      <div className={`fixed right-0 top-0 h-full w-full max-w-md bg-gradient-to-br from-ivory via-champagne/10 to-rose/5 shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out ${
+      <div className={`fixed right-0 top-0 h-full w-full max-w-md bg-ivory shadow-2xl z-50 flex flex-col transition-all duration-500 ease-out ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gold/20 bg-white/80 backdrop-blur-sm">
+        <div className="flex items-center justify-between p-5 border-b border-gold/20 bg-gradient-to-r from-champagne/20 to-rose/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-champagne/30 to-champagne/10 border border-gold/30 flex items-center justify-center">
-              <svg className="w-5 h-5 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-12 h-12 rounded-2xl bg-leather/10 border border-leather/20 flex items-center justify-center">
+              <svg className="w-6 h-6 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
             </div>
-            <h2 className="font-display text-2xl text-leather">
-              Panier <span className="text-taupe">({itemCount})</span>
-            </h2>
+            <div>
+              <h2 className="font-display text-2xl text-leather">Mon panier</h2>
+              <p className="text-xs text-taupe">{itemCount} article{itemCount > 1 ? 's' : ''}</p>
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-champagne/20 rounded-xl transition-all"
+            className="p-2.5 hover:bg-leather/10 rounded-xl transition-all duration-300"
           >
             <svg className="w-6 h-6 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -50,72 +51,122 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
         {/* Contenu */}
         {items.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
-            <div className="w-24 h-24 mb-6 rounded-2xl bg-gradient-to-br from-champagne/30 to-champagne/10 border border-gold/30 flex items-center justify-center">
-              <svg className="w-12 h-12 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <div className="w-28 h-28 mb-6 rounded-full bg-gradient-to-br from-champagne/40 to-rose/30 border border-gold/20 flex items-center justify-center animate-float">
+              <svg className="w-14 h-14 text-leather/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
             </div>
-            <h3 className="font-display text-2xl text-leather mb-3">Votre panier est vide</h3>
-            <p className="text-taupe text-sm mb-8">Ajoutez des bijoux à votre collection</p>
-            <Button onClick={onClose} className="bg-leather text-ivory hover:bg-leather/90 px-8">
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h3 className="font-display text-2xl text-leather mb-2">Votre panier est vide</h3>
+            <p className="text-taupe text-sm mb-8 max-w-xs">
+              Explorez notre collection et trouvez le bijou parfait pour vous
+            </p>
+            <Button 
+              onClick={onClose} 
+              className="btn-premium bg-leather text-ivory hover:bg-leather/90 px-8 py-5 rounded-full"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              Continuer mes achats
+              Découvrir la collection
             </Button>
           </div>
         ) : (
           <>
             {/* Liste des produits */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {items.map((item) => (
-                <div key={item.id} className="group bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-gold/20 hover:shadow-md transition-all duration-200">
-                  <div className="flex gap-4">
-                    <Link href={`/product/${item.slug}`} onClick={onClose} className="flex-shrink-0">
-                      <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-champagne/40 to-champagne/20 border border-gold/30 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {items.map((item, index) => (
+                <div 
+                  key={item.id} 
+                  className="group bg-white rounded-2xl p-4 border border-gold/10 hover:border-gold/30 hover:shadow-lg transition-all duration-300 animate-fade-in"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className="flex gap-3">
+                    {/* Image */}
+                    <Link href={`/product/${item.productId}`} onClick={onClose} className="flex-shrink-0">
+                      <div className="w-20 h-20 rounded-xl bg-gradient-to-br from-champagne/30 to-rose/20 border border-gold/20 overflow-hidden img-zoom">
                         {item.image ? (
                           <Image
                             src={item.image}
                             alt={item.name}
-                            width={96}
-                            height={96}
+                            width={80}
+                            height={80}
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold/40 to-gold/20" />
+                          <div className="w-full h-full flex items-center justify-center">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold/30 to-gold/10" />
+                          </div>
                         )}
                       </div>
                     </Link>
 
-                    <div className="flex-1 min-w-0 flex flex-col justify-between">
-                      <div>
-                        <Link href={`/product/${item.slug}`} onClick={onClose}>
-                          <h3 className="font-display text-base text-leather hover:text-gold transition-colors line-clamp-2 mb-1">
-                            {item.name}
-                          </h3>
-                        </Link>
-                        <p className="text-xs text-taupe">Qté : {item.quantity}</p>
-                        {item.charms.length > 0 && (
-                          <div className="text-xs text-taupe mt-1 space-y-1">
-                            {item.charms.map((charm) => (
-                              <p key={`${item.id}-${charm.label}`}>
-                                Charm : {charm.label}
-                                {charm.price > 0 && ` (+${charm.price.toFixed(2)} €)`}
-                              </p>
-                            ))}
-                          </div>
-                        )}
-                        <p className="text-sm text-taupe mt-2">Prix unitaire : {item.price.toFixed(2)} €</p>
-                        <p className="text-base font-semibold text-leather">
-                          {(item.price * item.quantity).toFixed(2)} €
+                    {/* Infos */}
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/product/${item.productId}`} onClick={onClose}>
+                        <h3 className="font-medium text-sm text-leather hover:text-gold transition-colors line-clamp-1 mb-1">
+                          {item.name}
+                        </h3>
+                      </Link>
+                      
+                      {/* Coloris */}
+                      {item.color && (
+                        <p className="text-xs text-taupe mb-1">
+                          <span className="inline-flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-gold/50" />
+                            {item.color}
+                          </span>
                         </p>
+                      )}
+
+                      {/* Charms */}
+                      {item.charms.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-1">
+                          {item.charms.slice(0, 2).map((charm) => (
+                            <span 
+                              key={`${item.id}-${charm.label}`}
+                              className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-champagne/30 text-[10px] text-leather"
+                            >
+                              ✨ {charm.label}
+                            </span>
+                          ))}
+                          {item.charms.length > 2 && (
+                            <span className="text-[10px] text-taupe">+{item.charms.length - 2}</span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Quantité + Prix */}
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center rounded-lg border border-gold/20 bg-champagne/10 overflow-hidden">
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="w-7 h-7 flex items-center justify-center hover:bg-champagne/30 transition-colors"
+                          >
+                            <svg className="w-3 h-3 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                            </svg>
+                          </button>
+                          <span className="w-7 text-center text-xs font-semibold text-leather">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="w-7 h-7 flex items-center justify-center hover:bg-champagne/30 transition-colors"
+                          >
+                            <svg className="w-3 h-3 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          </button>
+                        </div>
+                        <span className="font-semibold text-leather">
+                          {(item.price * item.quantity).toFixed(2)} €
+                        </span>
                       </div>
                     </div>
 
+                    {/* Supprimer */}
                     <button
                       onClick={() => removeItem(item.id)}
-                      className="flex-shrink-0 p-2 text-red-600 hover:bg-red-50 rounded-xl transition-all h-fit"
+                      className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                       title="Supprimer"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,29 +179,64 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             </div>
 
             {/* Footer avec total */}
-            <div className="border-t border-gold/20 p-6 space-y-4 bg-white/80 backdrop-blur-sm">
-              <div className="flex justify-between items-center p-4 bg-gradient-to-br from-champagne/20 to-rose/10 rounded-xl border border-gold/30">
-                <span className="font-display text-xl text-leather">Total</span>
-                <span className="font-display text-3xl text-leather">{total.toFixed(2)} €</span>
+            <div className="border-t border-gold/20 p-5 space-y-4 bg-gradient-to-t from-champagne/10 to-transparent">
+              {/* Résumé */}
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between text-taupe">
+                  <span>Sous-total</span>
+                  <span>{subtotal.toFixed(2)} €</span>
+                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-green-600 font-medium">
+                    <span>Réduction</span>
+                    <span>-{discount.toFixed(2)} €</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-xs text-taupe">
+                  <span>Livraison</span>
+                  <span>Calculée au checkout</span>
+                </div>
               </div>
 
-              <Link href="/cart" onClick={onClose}>
-                <Button className="w-full bg-leather text-ivory hover:bg-leather/90 h-14 text-base font-medium shadow-lg">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                  </svg>
-                  Voir le panier complet
-                </Button>
-              </Link>
+              {/* Total */}
+              <div className="flex justify-between items-center py-4 px-4 bg-leather/5 rounded-2xl border border-leather/10">
+                <span className="font-display text-lg text-leather">Total</span>
+                <span className="font-display text-2xl text-leather">{total.toFixed(2)} €</span>
+              </div>
 
-              <Link href="/checkout" onClick={onClose}>
-                <Button className="w-full bg-gradient-to-r from-gold to-gold/80 text-leather hover:from-gold/90 hover:to-gold/70 h-14 text-base font-semibold shadow-lg border border-gold/30">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              {/* Boutons */}
+              <div className="space-y-2">
+                <Link href="/checkout" onClick={onClose} className="block">
+                  <Button className="w-full btn-premium bg-leather text-ivory hover:bg-leather/90 h-12 text-sm font-medium rounded-xl shadow-lg shadow-leather/20">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Passer commande
+                  </Button>
+                </Link>
+
+                <Link href="/cart" onClick={onClose} className="block">
+                  <Button variant="outline" className="w-full h-10 text-sm rounded-xl border-leather/20 text-leather hover:bg-leather/5">
+                    Voir le panier détaillé
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Trust */}
+              <div className="flex items-center justify-center gap-4 pt-2 text-[10px] text-taupe">
+                <span className="flex items-center gap-1">
+                  <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  Procéder au paiement
-                </Button>
-              </Link>
+                  Paiement sécurisé
+                </span>
+                <span className="flex items-center gap-1">
+                  <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Livraison offerte dès 50€
+                </span>
+              </div>
             </div>
           </>
         )}
@@ -158,4 +244,3 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     </>
   )
 }
-

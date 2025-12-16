@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { supabase } from '@/lib/supabase'
@@ -32,14 +33,26 @@ export default async function ProductPage({
 
   if (!product) {
     return (
-      <div>
+      <div className="min-h-screen gradient-hero">
         <Header />
-        <div className="mx-auto max-w-6xl px-4 py-16 text-center">
-          <h1 className="font-display text-3xl mb-4">Produit introuvable</h1>
-          <p className="text-taupe">
-            Ce produit n&apos;existe pas ou a été retiré.
-          </p>
-        </div>
+        <main className="mx-auto max-w-4xl px-4 py-20 text-center animate-fade-in-up">
+          <div className="card-elegant p-12">
+            <span className="text-6xl mb-6 block">💎</span>
+            <h1 className="font-display text-4xl text-leather mb-4">Produit introuvable</h1>
+            <p className="text-taupe mb-8 max-w-md mx-auto">
+              Ce produit n&apos;existe pas ou a été retiré de notre collection.
+            </p>
+            <Link 
+              href="/"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-leather text-ivory rounded-full hover:bg-leather/90 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              Retour à la boutique
+            </Link>
+          </div>
+        </main>
         <Footer />
       </div>
     )
@@ -127,9 +140,9 @@ export default async function ProductPage({
   }))
 
   return (
-    <div>
+    <div className="min-h-screen bg-ivory">
       <Header />
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 lg:py-12">
         <ProductPageClient
           product={{
             id: product.id,

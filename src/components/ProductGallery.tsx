@@ -86,7 +86,6 @@ export default function ProductGallery({ productName, images, onColorChange, var
 
   const handleColorSelect = (color: string) => {
     setSelectedColor(color)
-    // Trouver la première image avec ce coloris
     const colorIndex = orderedImages.findIndex((img) => img.color_name === color)
     if (colorIndex !== -1) {
       setActiveIndex(colorIndex)
@@ -95,7 +94,6 @@ export default function ProductGallery({ productName, images, onColorChange, var
 
   const handleThumbnailClick = (index: number) => {
     setActiveIndex(index)
-    // Si l'image a un coloris, le sélectionner
     const img = orderedImages[index]
     if (img?.color_name) {
       setSelectedColor(img.color_name)
@@ -103,12 +101,13 @@ export default function ProductGallery({ productName, images, onColorChange, var
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Sélecteur de coloris */}
       {hasColors && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-leather">
-            Coloris : <span className="text-gold">{selectedColor}</span>
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-leather flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-gradient-to-br from-gold to-gold/50" />
+            Coloris : <span className="text-gold font-semibold">{selectedColor}</span>
           </p>
           <div className="flex gap-2 flex-wrap">
             {colorOptions.map((color) => {
@@ -116,6 +115,7 @@ export default function ProductGallery({ productName, images, onColorChange, var
               const variant = variants.find((v) => v.color_name === color)
               const isOutOfStock = variant && variant.stock_quantity <= 0
               const isInactive = variant && !variant.is_active
+              const isSelected = selectedColor === color
 
               return (
                 <button
@@ -123,45 +123,54 @@ export default function ProductGallery({ productName, images, onColorChange, var
                   type="button"
                   onClick={() => !isInactive && handleColorSelect(color)}
                   disabled={isInactive}
-                  className={`relative flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 ${
+                  className={`group relative flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border-2 transition-all duration-300 ${
                     isInactive
                       ? 'opacity-40 cursor-not-allowed bg-gray-100 border-gray-300'
-                      : selectedColor === color
-                        ? 'border-leather bg-leather/10 ring-2 ring-leather/30'
+                      : isSelected
+                        ? 'border-leather bg-gradient-to-br from-champagne/50 to-rose/30 shadow-lg shadow-gold/20'
                         : isOutOfStock
                           ? 'border-red-200 bg-red-50/50 hover:border-red-300'
-                          : 'border-gold/30 hover:border-leather/50 bg-champagne/20'
+                          : 'border-gold/20 hover:border-gold/50 bg-white hover:shadow-md'
                   }`}
                 >
                   {/* Mini aperçu de l'image */}
                   {colorImage && (
-                    <div className={`w-6 h-6 rounded-full overflow-hidden border flex-shrink-0 ${isOutOfStock ? 'border-red-300' : 'border-gold/30'}`}>
+                    <div className={`w-8 h-8 rounded-full overflow-hidden border-2 flex-shrink-0 transition-transform duration-300 ${
+                      isSelected ? 'border-leather scale-110' : isOutOfStock ? 'border-red-300' : 'border-gold/30 group-hover:scale-105'
+                    }`}>
                       <Image
                         src={colorImage.url}
                         alt={color}
-                        width={24}
-                        height={24}
+                        width={32}
+                        height={32}
                         className={`object-cover w-full h-full ${isOutOfStock ? 'grayscale opacity-70' : ''}`}
                       />
                     </div>
                   )}
-                  <span className={`text-sm font-medium ${isOutOfStock ? 'text-red-600' : 'text-leather'}`}>
-                    {color}
-                  </span>
-                  {/* Badge stock */}
-                  {variant && (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                      isOutOfStock
-                        ? 'bg-red-100 text-red-700'
-                        : variant.stock_quantity <= 5
-                          ? 'bg-orange-100 text-orange-700'
-                          : 'bg-green-100 text-green-700'
-                    }`}>
-                      {isOutOfStock ? 'Rupture' : `${variant.stock_quantity} dispo`}
+                  <div className="flex flex-col items-start">
+                    <span className={`text-sm font-medium ${isOutOfStock ? 'text-red-600' : 'text-leather'}`}>
+                      {color}
                     </span>
-                  )}
-                  {selectedColor === color && !isOutOfStock && (
-                    <span className="text-leather">✓</span>
+                    {/* Badge stock */}
+                    {variant && (
+                      <span className={`text-[10px] ${
+                        isOutOfStock
+                          ? 'text-red-500'
+                          : variant.stock_quantity <= 5
+                            ? 'text-orange-600'
+                            : 'text-green-600'
+                      }`}>
+                        {isOutOfStock ? 'Épuisé' : variant.stock_quantity <= 5 ? `Plus que ${variant.stock_quantity}` : 'En stock'}
+                      </span>
+                    )}
+                  </div>
+                  {/* Checkmark */}
+                  {isSelected && !isOutOfStock && (
+                    <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-leather flex items-center justify-center shadow-md animate-scale-in">
+                      <svg className="w-3 h-3 text-ivory" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
                   )}
                 </button>
               )
@@ -173,7 +182,7 @@ export default function ProductGallery({ productName, images, onColorChange, var
       {/* Image principale avec zoom */}
       <div
         ref={containerRef}
-        className="aspect-square bg-champagne/30 rounded-2xl overflow-hidden border border-gold/30 relative cursor-zoom-in group"
+        className="aspect-square rounded-3xl overflow-hidden border border-gold/20 relative cursor-zoom-in group bg-gradient-to-br from-champagne/20 to-rose/10 shadow-lg"
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -184,8 +193,8 @@ export default function ProductGallery({ productName, images, onColorChange, var
           src={activeImage?.url || PLACEHOLDER}
           alt={activeImage?.alt || productName}
           fill
-          className={`object-cover transition-opacity duration-200 ${
-            isZooming ? 'opacity-0' : 'opacity-100'
+          className={`object-cover transition-all duration-300 ${
+            isZooming ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
           }`}
           sizes="(max-width: 768px) 100vw, 50vw"
           priority
@@ -206,63 +215,95 @@ export default function ProductGallery({ productName, images, onColorChange, var
 
         {/* Badge coloris sur l'image */}
         {activeImage?.color_name && (
-          <div className="absolute top-3 left-3 bg-noir/70 text-champagne text-xs px-2 py-1 rounded-lg">
-            {activeImage.color_name}
+          <div className="absolute top-4 left-4 bg-leather/90 backdrop-blur-sm text-ivory text-xs font-medium px-3 py-1.5 rounded-full shadow-lg">
+            ✨ {activeImage.color_name}
           </div>
         )}
 
-        {/* Indicateur de zoom (visible au survol) */}
+        {/* Indicateur de zoom */}
         <div
-          className={`absolute bottom-3 right-3 bg-noir/70 text-champagne text-xs px-2 py-1 rounded-lg hidden md:flex items-center gap-1.5 transition-opacity duration-200 ${
-            isZooming ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'
+          className={`absolute bottom-4 right-4 bg-leather/90 backdrop-blur-sm text-ivory text-xs px-3 py-2 rounded-full hidden md:flex items-center gap-2 transition-all duration-300 shadow-lg ${
+            isZooming ? 'opacity-0 translate-y-2' : 'opacity-0 group-hover:opacity-100 group-hover:translate-y-0'
           }`}
         >
-          <svg
-            className="w-3.5 h-3.5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
-            />
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
           </svg>
           Survoler pour zoomer
         </div>
+
+        {/* Navigation arrows */}
+        {orderedImages.length > 1 && (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setActiveIndex((prev) => (prev === 0 ? orderedImages.length - 1 : prev - 1))
+              }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm text-leather flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white shadow-lg"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setActiveIndex((prev) => (prev === orderedImages.length - 1 ? 0 : prev + 1))
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm text-leather flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white shadow-lg"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </>
+        )}
+
+        {/* Image counter */}
+        {orderedImages.length > 1 && (
+          <div className="absolute bottom-4 left-4 bg-leather/90 backdrop-blur-sm text-ivory text-xs font-medium px-3 py-1.5 rounded-full shadow-lg">
+            {activeIndex + 1} / {orderedImages.length}
+          </div>
+        )}
       </div>
 
       {/* Miniatures */}
       {orderedImages.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {orderedImages.map((img, index) => (
-            <button
-              key={img.url + index}
-              type="button"
-              onClick={() => handleThumbnailClick(index)}
-              className={`relative flex-shrink-0 aspect-square w-20 rounded-xl border ${
-                index === activeIndex
-                  ? 'border-leather ring-2 ring-leather/40'
-                  : 'border-gold/30 hover:border-leather/50'
-              } overflow-hidden transition-all duration-200`}
-            >
-              <Image
-                src={img.url || PLACEHOLDER}
-                alt={img.alt || productName}
-                fill
-                className="object-cover"
-                sizes="80px"
-              />
-              {/* Indicateur de coloris sur la miniature */}
-              {img.color_name && (
-                <div className="absolute bottom-0 left-0 right-0 bg-noir/70 text-champagne text-[10px] px-1 py-0.5 text-center truncate">
-                  {img.color_name}
-                </div>
-              )}
-            </button>
-          ))}
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          {orderedImages.map((img, index) => {
+            const isActive = index === activeIndex
+            return (
+              <button
+                key={img.url + index}
+                type="button"
+                onClick={() => handleThumbnailClick(index)}
+                className={`group relative flex-shrink-0 aspect-square w-20 sm:w-24 rounded-2xl border-2 overflow-hidden transition-all duration-300 ${
+                  isActive
+                    ? 'border-leather ring-2 ring-leather/30 ring-offset-2 shadow-lg'
+                    : 'border-gold/20 hover:border-gold/50 hover:shadow-md'
+                }`}
+              >
+                <Image
+                  src={img.url || PLACEHOLDER}
+                  alt={img.alt || productName}
+                  fill
+                  className={`object-cover transition-transform duration-300 ${isActive ? '' : 'group-hover:scale-110'}`}
+                  sizes="96px"
+                />
+                {/* Overlay on hover */}
+                {!isActive && (
+                  <div className="absolute inset-0 bg-leather/0 group-hover:bg-leather/10 transition-colors duration-300" />
+                )}
+                {/* Indicateur de coloris sur la miniature */}
+                {img.color_name && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-leather/80 to-transparent text-ivory text-[10px] font-medium px-2 py-1.5 text-center truncate">
+                    {img.color_name}
+                  </div>
+                )}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>
