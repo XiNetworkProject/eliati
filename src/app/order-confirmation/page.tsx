@@ -41,9 +41,10 @@ type OrderItem = {
   quantity: number
   product_price_cents: number
   charms: Array<{ label: string; price_cents: number }>
+  color?: string | null
 }
 
-function normalizeOrderItems(data: Array<{ product_name: string; quantity: number; product_price_cents: number; charms: unknown }>): OrderItem[] {
+function normalizeOrderItems(data: Array<{ product_name: string; quantity: number; product_price_cents: number; charms: unknown; color?: string | null }>): OrderItem[] {
   return data.map((item) => {
     const rawCharms = Array.isArray(item.charms) ? item.charms : []
     const normalizedCharms = rawCharms
@@ -65,6 +66,7 @@ function normalizeOrderItems(data: Array<{ product_name: string; quantity: numbe
       quantity: item.quantity,
       product_price_cents: item.product_price_cents,
       charms: normalizedCharms,
+      color: item.color || null,
     }
   })
 }
@@ -88,7 +90,7 @@ function OrderConfirmationContent() {
           .single(),
         supabase
           .from('order_items')
-          .select('product_name, quantity, product_price_cents, charms')
+          .select('product_name, quantity, product_price_cents, charms, color')
           .eq('order_id', orderId)
       ])
 
@@ -164,6 +166,9 @@ function OrderConfirmationContent() {
                         <div>
                           <p className="text-sm font-medium text-leather">{item.product_name}</p>
                           <p className="text-xs text-taupe">Quantité : {item.quantity}</p>
+                          {item.color && (
+                            <p className="text-xs text-leather font-medium">Coloris : {item.color}</p>
+                          )}
                         </div>
                         <p className="text-sm font-semibold text-leather">
                           {((item.product_price_cents * item.quantity) / 100).toFixed(2)} €

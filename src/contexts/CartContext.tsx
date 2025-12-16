@@ -14,6 +14,8 @@ export type CartItem = {
   image?: string
   weight?: number
   charms: Array<{ label: string; price: number }>
+  color?: string
+  variantId?: string
   optionsKey: string
 }
 
@@ -35,6 +37,8 @@ type CartItemInput = {
   image?: string
   weight?: number
   charms?: Array<{ label: string; price: number }>
+  color?: string
+  variantId?: string
 }
 
 type CartContextType = {
@@ -65,7 +69,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       .filter((label) => label.length > 0)
       .sort()
       .join('|')
-    return `${item.productId}__${sortedCharms}`
+    const colorPart = item.color ? `__color:${item.color}` : ''
+    const variantPart = item.variantId ? `__variant:${item.variantId}` : ''
+    return `${item.productId}__${sortedCharms}${colorPart}${variantPart}`
   }
 
   // Charger le panier depuis localStorage au montage

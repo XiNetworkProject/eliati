@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import ProductForm from '@/components/admin/ProductForm'
 import ProductImages from '@/components/admin/ProductImages'
+import ProductVariants from '@/components/admin/ProductVariants'
 import PromoCodesManager from '@/components/admin/PromoCodesManager'
 import PayPalSettings from '@/components/admin/PayPalSettings'
 import CarouselManager from '@/components/admin/CarouselManager'
@@ -94,6 +95,13 @@ const PROTECTED_CATEGORIES = [
 const PROTECTED_CATEGORY_SLUGS = PROTECTED_CATEGORIES.map((c) => c.slug.toLowerCase())
 
 // Types pour l'administration
+type ProductImage = {
+  id: string
+  url: string
+  alt: string | null
+  sort_order: number | null
+}
+
 type Product = {
   id: string
   name: string
@@ -112,6 +120,7 @@ type Product = {
   preorder_count?: number
   preorder_available_date?: string | null
   charms_options?: unknown
+  product_images?: ProductImage[]
 }
 
 type Category = {
@@ -157,7 +166,7 @@ function AdminDashboard() {
   const [showProductForm, setShowProductForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<EditableProduct | null>(null)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
-  const [productImages, setProductImages] = useState<Array<{ id: string; url: string; alt: string | null; sort_order: number }>>([])
+  const [productImages, setProductImages] = useState<Array<{ id: string; url: string; alt: string | null; sort_order: number; color_name?: string | null }>>([])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -188,7 +197,7 @@ function AdminDashboard() {
       }
       const { data } = await supabase
         .from('product_images')
-        .select('id,url,alt,sort_order')
+        .select('id,url,alt,sort_order,color_name')
         .eq('product_id', selectedProduct.id)
         .order('sort_order', { ascending: true })
 
@@ -202,10 +211,10 @@ function AdminDashboard() {
     try {
       setLoading(true)
       
-      // Charger les produits
+      // Charger les produits avec leurs images
       const { data: productsData } = await supabase
         .from('products')
-        .select('*')
+        .select('*, product_images(id, url, alt, sort_order)')
         .order('created_at', { ascending: false })
       
       // Charger les catégories
@@ -453,15 +462,26 @@ function AdminDashboard() {
                   url: img.url,
                   alt: img.alt,
                   position: typeof img.sort_order === 'number' ? img.sort_order : 0,
+                  color_name: img.color_name,
                 }))}
                 onUpdate={async () => {
                   const { data } = await supabase
                     .from('product_images')
-                    .select('id,url,alt,sort_order')
+                    .select('id,url,alt,sort_order,color_name')
                     .eq('product_id', selectedProduct.id)
                     .order('sort_order', { ascending: true })
                   setProductImages(data || [])
                 }}
+              />
+
+              {/* Séparateur */}
+              <div className="border-t border-gold/20 my-6"></div>
+
+              {/* Gestion des variantes (coloris & stock) */}
+              <ProductVariants
+                productId={selectedProduct.id}
+                productPriceCents={selectedProduct.price_cents}
+                onUpdate={loadData}
               />
             </div>
           </Card>
@@ -607,8 +627,24 @@ function ProductsTab({
           <Card key={product.id} className="group overflow-hidden bg-white/80 backdrop-blur-sm border-gold/20 hover:shadow-md transition-all duration-200">
             <div className="p-5 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5 text-center sm:text-left">
-                <div className="w-16 h-16 mx-auto sm:mx-0 rounded-xl bg-gradient-to-br from-champagne/40 to-champagne/20 border border-gold/30 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gold/40 to-gold/20" />
+                <div className="w-16 h-16 mx-auto sm:mx-0 rounded-xl bg-gradient-to-br from-champagne/40 to-champagne/20 border border-gold/30 flex items-center justify-center group-hover:scale-105 transition-transform overflow-hidden">
+                  {(() => {
+                    const sortedImages = (product.product_images || [])
+                      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                    const primaryImage = sortedImages[0]
+                    if (primaryImage?.url) {
+                      return (
+                        <Image
+                          src={primaryImage.url}
+                          alt={primaryImage.alt || product.name}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-cover"
+                        />
+                      )
+                    }
+                    return <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gold/40 to-gold/20" />
+                  })()}
                 </div>
                 <div>
                   <h3 className="font-display text-lg text-leather mb-1">{product.name}</h3>
@@ -746,7 +782,7 @@ function OrdersTab() {
   }>>([])
   const [loadingOrders, setLoadingOrders] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null)
-  const [orderItems, setOrderItems] = useState<Array<{ product_name: string; quantity: number; product_price_cents: number; charms: Array<{ label: string; price_cents: number }> }>>([])
+  const [orderItems, setOrderItems] = useState<Array<{ product_name: string; quantity: number; product_price_cents: number; charms: Array<{ label: string; price_cents: number }>; color?: string | null }>>([])
 
   useEffect(() => {
     loadOrders()
@@ -765,7 +801,7 @@ function OrdersTab() {
   const loadOrderItems = async (orderId: string) => {
     const { data } = await supabase
       .from('order_items')
-      .select('product_name, quantity, product_price_cents, charms')
+      .select('product_name, quantity, product_price_cents, charms, color')
       .eq('order_id', orderId)
       .order('created_at', { ascending: true })
     setOrderItems(
@@ -774,6 +810,7 @@ function OrdersTab() {
         quantity: item.quantity,
         product_price_cents: item.product_price_cents,
         charms: normalizeOrderItemCharms(item.charms),
+        color: item.color || null,
       }))
     )
   }
@@ -982,6 +1019,9 @@ function OrdersTab() {
                             <div>
                               <p className="text-sm font-medium text-leather">{item.product_name}</p>
                               <p className="text-xs text-taupe">Quantité: {item.quantity}</p>
+                              {item.color && (
+                                <p className="text-xs text-leather font-medium">Coloris: {item.color}</p>
+                              )}
                             </div>
                             <p className="text-sm font-semibold text-leather">
                               {((item.product_price_cents * item.quantity) / 100).toFixed(2)} €

@@ -12,6 +12,7 @@ interface ProductImageItem {
   url: string
   alt: string | null
   position: number
+  color_name?: string | null
 }
 
 interface ProductImagesProps {
@@ -23,6 +24,8 @@ interface ProductImagesProps {
 export default function ProductImages({ productId, images, onUpdate }: ProductImagesProps) {
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const [editingColorId, setEditingColorId] = useState<string | number | null>(null)
+  const [colorInput, setColorInput] = useState('')
 
   const remainingSlots = MAX_IMAGES - images.length
 
@@ -78,7 +81,8 @@ export default function ProductImages({ productId, images, onUpdate }: ProductIm
             product_id: productId,
             url: urlData.publicUrl,
             alt: file.name.split('.')[0],
-            sort_order: images.length + i
+            sort_order: images.length + i,
+            color_name: null
           })
 
         if (dbError) {
@@ -120,6 +124,34 @@ export default function ProductImages({ productId, images, onUpdate }: ProductIm
       console.error('Erreur lors de la suppression:', error)
       alert('Erreur lors de la suppression de l\'image')
     }
+  }
+
+  const handleEditColor = (image: ProductImageItem) => {
+    setEditingColorId(image.id)
+    setColorInput(image.color_name || '')
+  }
+
+  const handleSaveColor = async (imageId: string | number) => {
+    try {
+      const { error } = await supabase
+        .from('product_images')
+        .update({ color_name: colorInput.trim() || null })
+        .eq('id', imageId)
+
+      if (error) throw error
+
+      setEditingColorId(null)
+      setColorInput('')
+      onUpdate()
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du coloris:', error)
+      alert('Erreur lors de la sauvegarde du coloris')
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingColorId(null)
+    setColorInput('')
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -222,10 +254,56 @@ export default function ProductImages({ productId, images, onUpdate }: ProductIm
                     </div>
                   )}
                 </div>
-                <div className="p-2">
-                  <p className="text-xs text-taupe truncate">
+                <div className="p-3 space-y-2">
+                  <p className="text-xs text-taupe">
                     Position: {image.position + 1}
                   </p>
+                  
+                  {/* Édition du coloris */}
+                  {editingColorId === image.id ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={colorInput}
+                        onChange={(e) => setColorInput(e.target.value)}
+                        placeholder="Ex: Or, Argent, Or rose..."
+                        className="w-full px-2 py-1 text-sm border border-gold/30 rounded focus:ring-2 focus:ring-gold/50 focus:border-gold"
+                      />
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          onClick={() => handleSaveColor(image.id)}
+                          className="flex-1 bg-leather text-ivory hover:bg-leather/90 text-xs h-7"
+                        >
+                          ✓
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleCancelEdit}
+                          className="flex-1 text-xs h-7"
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div 
+                      className="flex items-center justify-between cursor-pointer hover:bg-champagne/50 rounded p-1 -m-1 transition-colors"
+                      onClick={() => handleEditColor(image)}
+                    >
+                      <span className="text-xs text-leather">
+                        {image.color_name ? (
+                          <>
+                            <span className="font-medium">Coloris:</span> {image.color_name}
+                          </>
+                        ) : (
+                          <span className="text-taupe italic">+ Ajouter un coloris</span>
+                        )}
+                      </span>
+                      <span className="text-taupe text-xs">✏️</span>
+                    </div>
+                  )}
                 </div>
               </Card>
             ))}
@@ -237,6 +315,18 @@ export default function ProductImages({ productId, images, onUpdate }: ProductIm
           <div className="text-4xl mb-2">🖼️</div>
           <p>Aucune image ajoutée</p>
           <p className="text-sm">Ajoutez jusqu&apos;à {MAX_IMAGES} images pour votre produit</p>
+        </div>
+      )}
+
+      {/* Info coloris */}
+      {images.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
+          <p className="font-medium mb-1">💡 Astuce coloris</p>
+          <p>
+            Ajoutez un nom de coloris à chaque image pour permettre à vos clients de choisir 
+            leur variante préférée. Les images avec un coloris seront affichées comme options 
+            sélectionnables sur la page produit.
+          </p>
         </div>
       )}
     </div>

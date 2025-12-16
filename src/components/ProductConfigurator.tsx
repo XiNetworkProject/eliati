@@ -22,7 +22,7 @@ export type ProductConfiguratorProps = {
     description: string | null
     price_cents: number
     compare_at_cents: number | null
-    stock_status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'preorder'
+    stock_status: string | null
     stock_quantity?: number | null
     preorder_limit?: number | null
     preorder_count?: number | null
@@ -32,6 +32,9 @@ export type ProductConfiguratorProps = {
   categoryName?: string | null
   charmOptions: CharmOption[]
   primaryImage: string
+  selectedColor?: string | null
+  variantId?: string | null
+  hasVariants?: boolean
 }
 
 export default function ProductConfigurator({
@@ -39,6 +42,9 @@ export default function ProductConfigurator({
   categoryName,
   charmOptions,
   primaryImage,
+  selectedColor,
+  variantId,
+  hasVariants = false,
 }: ProductConfiguratorProps) {
   const [selectedCharms, setSelectedCharms] = useState<SelectedCharm[]>([])
   const [charmError, setCharmError] = useState('')
@@ -102,7 +108,7 @@ export default function ProductConfigurator({
       </h1>
 
       {product.description && (
-        <p className="text-taupe leading-relaxed">
+        <p className="text-taupe leading-relaxed whitespace-pre-line">
           {product.description}
         </p>
       )}
@@ -202,6 +208,8 @@ export default function ProductConfigurator({
                 weight_grams: product.weight_grams ?? 0,
               }}
               selectedCharms={selectedCharms}
+              selectedColor={selectedColor}
+              variantId={variantId}
               onAdded={resetFields}
               className="w-full"
               disabled={false}
@@ -218,6 +226,7 @@ export default function ProductConfigurator({
             <div className={`p-3 rounded-xl mb-3 ${product.stock_status === 'low_stock' ? 'bg-orange-50 border border-orange-200' : 'bg-green-50 border border-green-200'}`}>
               <p className={`text-sm font-medium ${product.stock_status === 'low_stock' ? 'text-orange-700' : 'text-green-700'}`}>
                 {product.stock_status === 'low_stock' ? '⚠️ Plus que' : '✓'} {product.stock_quantity} en stock
+                {hasVariants && selectedColor && <span className="text-xs font-normal ml-1">({selectedColor})</span>}
               </p>
             </div>
           )}
@@ -231,6 +240,8 @@ export default function ProductConfigurator({
               weight_grams: product.weight_grams ?? 0,
             }}
             selectedCharms={selectedCharms}
+            selectedColor={selectedColor}
+            variantId={variantId}
             onAdded={resetFields}
             className="w-full"
           />

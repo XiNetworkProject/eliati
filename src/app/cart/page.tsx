@@ -127,6 +127,12 @@ export default function CartPage() {
                           {item.name}
                         </h3>
                       </Link>
+                      {/* Coloris sélectionné */}
+                      {item.color && (
+                        <p className="text-xs text-leather font-medium mb-2">
+                          <span className="text-taupe">Coloris :</span> {item.color}
+                        </p>
+                      )}
                       {item.charms.length > 0 && (
                         <div className="text-xs text-taupe space-y-1 mb-3">
                           {item.charms.map((charm) => (

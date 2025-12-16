@@ -14,11 +14,13 @@ type AddToCartButtonProps = {
   }
   className?: string
   selectedCharms?: Array<{ label: string; price: number }>
+  selectedColor?: string | null
+  variantId?: string | null
   disabled?: boolean
   onAdded?: () => void
 }
 
-export default function AddToCartButton({ product, className, selectedCharms = [], disabled, onAdded }: AddToCartButtonProps) {
+export default function AddToCartButton({ product, className, selectedCharms = [], selectedColor, variantId, disabled, onAdded }: AddToCartButtonProps) {
   const { addItem } = useCart()
   const [added, setAdded] = useState(false)
 
@@ -34,6 +36,8 @@ export default function AddToCartButton({ product, className, selectedCharms = [
         label: charm.label,
         price: charm.price,
       })),
+      color: selectedColor || undefined,
+      variantId: variantId || undefined,
     })
 
     setAdded(true)

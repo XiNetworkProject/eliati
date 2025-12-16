@@ -1,8 +1,7 @@
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { supabase } from '@/lib/supabase'
-import ProductGallery from '@/components/ProductGallery'
-import ProductConfigurator from '@/components/ProductConfigurator'
+import ProductPageClient from '@/components/ProductPageClient'
 
 export default async function ProductPage({
   params,
@@ -10,11 +9,26 @@ export default async function ProductPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const { data: product } = await supabase
+  
+  // Charger le produit avec images et catégorie
+  const { data: product, error } = await supabase
     .from('products')
-    .select('*,product_images(url,alt,sort_order),categories(name)')
+    .select('*,product_images(id,url,alt,sort_order,color_name),categories(name)')
     .eq('id', id)
     .single()
+
+  // Charger les variantes du produit
+  const { data: variantsData } = await supabase
+    .from('product_variants')
+    .select('id, color_name, stock_quantity, low_stock_threshold, price_cents, is_active')
+    .eq('product_id', id)
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
+
+  // Log pour debug
+  if (error) {
+    console.error('Erreur chargement produit:', error)
+  }
 
   if (!product) {
     return (
@@ -94,41 +108,51 @@ export default async function ProductPage({
 
   const charmOptions = parseCharmOptions()
 
+  // Transformer les images pour le composant client
+  const galleryImages = sortedImages.map((img: { url: string; alt?: string | null; sort_order?: number | null; color_name?: string | null }) => ({
+    url: img.url,
+    alt: img.alt ?? null,
+    sort_order: img.sort_order ?? null,
+    color_name: img.color_name ?? null,
+  }))
+
+  // Transformer les variantes pour le composant client
+  const variants = (variantsData || []).map((v) => ({
+    id: v.id,
+    color_name: v.color_name,
+    stock_quantity: v.stock_quantity,
+    low_stock_threshold: v.low_stock_threshold,
+    price_cents: v.price_cents,
+    is_active: v.is_active,
+  }))
+
   return (
     <div>
       <Header />
       <main className="mx-auto max-w-6xl px-4 py-8">
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Galerie d'images */}
-          <ProductGallery
-            productName={product.name}
-            images={sortedImages}
-          />
-
-          {/* Informations produit + personnalisation */}
-          <ProductConfigurator
-            product={{
-              id: product.id,
-              name: product.name,
-              slug: product.slug,
-              description: product.description,
-              price_cents: product.price_cents,
-              compare_at_cents: product.compare_at_cents,
-              stock_status: product.stock_status,
-              stock_quantity: product.stock_quantity,
-              preorder_limit: product.preorder_limit,
-              preorder_count: product.preorder_count,
-              preorder_available_date: product.preorder_available_date,
-              weight_grams: product.weight_grams,
-            }}
-            categoryName={product.categories?.name}
-            charmOptions={charmOptions}
-            primaryImage={primaryImage}
-          />
-        </div>
+        <ProductPageClient
+          product={{
+            id: product.id,
+            name: product.name,
+            slug: product.slug,
+            description: product.description,
+            price_cents: product.price_cents,
+            compare_at_cents: product.compare_at_cents,
+            stock_status: product.stock_status,
+            stock_quantity: product.stock_quantity,
+            preorder_limit: product.preorder_limit,
+            preorder_count: product.preorder_count,
+            preorder_available_date: product.preorder_available_date,
+            weight_grams: product.weight_grams,
+          }}
+          categoryName={product.categories?.name ?? null}
+          charmOptions={charmOptions}
+          images={galleryImages}
+          primaryImage={primaryImage}
+          variants={variants}
+        />
       </main>
       <Footer />
     </div>
   )
 }
-

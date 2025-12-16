@@ -183,6 +183,8 @@ export default function CheckoutPage() {
           label: charm.label,
           price_cents: Math.round(charm.price * 100),
         })),
+        color: item.color || null,
+        variant_id: item.variantId || null,
        }))
 
       const { error: itemsError } = await supabase
@@ -190,6 +192,26 @@ export default function CheckoutPage() {
         .insert(orderItems)
 
       if (itemsError) throw itemsError
+
+      // Décrémenter le stock des variantes
+      for (const item of items) {
+        if (item.variantId) {
+          // Récupérer le stock actuel
+          const { data: variant } = await supabase
+            .from('product_variants')
+            .select('stock_quantity')
+            .eq('id', item.variantId)
+            .single()
+
+          if (variant) {
+            const newStock = Math.max(0, variant.stock_quantity - item.quantity)
+            await supabase
+              .from('product_variants')
+              .update({ stock_quantity: newStock })
+              .eq('id', item.variantId)
+          }
+        }
+      }
 
       setOrderId(order.id)
       setOrderCreated(true)
