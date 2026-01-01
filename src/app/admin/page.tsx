@@ -11,6 +11,8 @@ import ProductVariants from '@/components/admin/ProductVariants'
 import PromoCodesManager from '@/components/admin/PromoCodesManager'
 import ReviewsManager from '@/components/admin/ReviewsManager'
 import PayPalSettings from '@/components/admin/PayPalSettings'
+import SiteSettings from '@/components/admin/SiteSettings'
+import LegalTextsManager from '@/components/admin/LegalTextsManager'
 import CarouselManager from '@/components/admin/CarouselManager'
 import CategoryManager from '@/components/admin/CategoryManager'
 import AdminGuard from '@/components/admin/AdminGuard'
@@ -421,7 +423,7 @@ function AdminDashboard() {
           {activeTab === 'reviews' && <ReviewsManager />}
           {activeTab === 'orders' && <OrdersTab />}
           {activeTab === 'analytics' && <AnalyticsTab />}
-          {activeTab === 'settings' && <PayPalSettings />}
+          {activeTab === 'settings' && <SettingsTab />}
         </div>
       </div>
 
@@ -1268,6 +1270,301 @@ function OrdersTab() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+// Composant Paramètres
+function SettingsTab() {
+  const [activeSubTab, setActiveSubTab] = useState<'site' | 'legal' | 'paypal' | 'shipping'>('site')
+
+  const subTabs = [
+    { id: 'site' as const, label: 'Site', icon: '🏪', description: 'Infos générales, contact, réseaux sociaux' },
+    { id: 'legal' as const, label: 'Textes légaux', icon: '📜', description: 'CGV, mentions légales, confidentialité' },
+    { id: 'paypal' as const, label: 'PayPal', icon: '💳', description: 'Configuration des paiements' },
+    { id: 'shipping' as const, label: 'Livraison', icon: '📦', description: 'Options et tarifs de livraison' },
+  ]
+
+  return (
+    <div className="space-y-6">
+      {/* Sous-navigation */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {subTabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveSubTab(tab.id)}
+            className={`p-4 rounded-xl text-left transition-all ${
+              activeSubTab === tab.id
+                ? 'bg-leather text-ivory shadow-lg'
+                : 'bg-white/80 text-taupe hover:text-leather hover:bg-white border border-gold/20'
+            }`}
+          >
+            <span className="text-2xl">{tab.icon}</span>
+            <p className="font-medium mt-2">{tab.label}</p>
+            <p className={`text-xs mt-1 ${activeSubTab === tab.id ? 'text-ivory/70' : 'text-taupe/60'}`}>
+              {tab.description}
+            </p>
+          </button>
+        ))}
+      </div>
+
+      {/* Contenu */}
+      {activeSubTab === 'site' && <SiteSettings />}
+      {activeSubTab === 'legal' && <LegalTextsManager />}
+      {activeSubTab === 'paypal' && <PayPalSettings />}
+      {activeSubTab === 'shipping' && <ShippingSettings />}
+    </div>
+  )
+}
+
+// Composant Paramètres de livraison
+function ShippingSettings() {
+  const [config, setConfig] = useState({
+    free_shipping_threshold: 50,
+    colissimo_base_price: 6.90,
+    mondial_relay_point_price: 4.90,
+    mondial_relay_locker_price: 5.50,
+    mondial_relay_home_price: 6.50,
+    processing_time: '1-2',
+    show_delivery_estimate: true,
+  })
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadConfig()
+  }, [])
+
+  const loadConfig = async () => {
+    try {
+      const { data } = await supabase
+        .from('site_settings')
+        .select('setting_value')
+        .eq('setting_key', 'shipping_config')
+        .single()
+
+      if (data?.setting_value) {
+        setConfig(prev => ({ ...prev, ...(data.setting_value as typeof config) }))
+      }
+    } catch (error) {
+      console.error('Erreur chargement:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const { data: existing } = await supabase
+        .from('site_settings')
+        .select('id')
+        .eq('setting_key', 'shipping_config')
+        .single()
+
+      if (existing) {
+        await supabase
+          .from('site_settings')
+          .update({
+            setting_value: config,
+            updated_at: new Date().toISOString()
+          })
+          .eq('setting_key', 'shipping_config')
+      } else {
+        await supabase
+          .from('site_settings')
+          .insert({
+            setting_key: 'shipping_config',
+            setting_value: config,
+            updated_at: new Date().toISOString()
+          })
+      }
+
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch (error) {
+      console.error('Erreur sauvegarde:', error)
+      alert('Erreur lors de la sauvegarde')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <Card className="p-8 text-center bg-white/80 backdrop-blur-sm border-gold/20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-leather mx-auto mb-3"></div>
+        <p className="text-taupe text-sm">Chargement...</p>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="font-display text-2xl text-leather">Options de livraison</h2>
+        <div className="flex items-center gap-3">
+          {saved && (
+            <span className="text-sm text-green-600 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Sauvegardé
+            </span>
+          )}
+          <Button
+            onClick={handleSave}
+            className="bg-leather text-ivory hover:bg-leather/90"
+            disabled={saving}
+          >
+            {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+          </Button>
+        </div>
+      </div>
+
+      <Card className="p-6 bg-white/80 backdrop-blur-sm border-gold/20">
+        <h3 className="font-display text-lg text-leather border-b border-gold/20 pb-2 mb-6">
+          Seuil de livraison gratuite
+        </h3>
+
+        <div className="max-w-xs">
+          <label className="block text-sm font-medium text-leather mb-2">
+            Livraison gratuite à partir de (€)
+          </label>
+          <div className="relative">
+            <input
+              type="number"
+              value={config.free_shipping_threshold}
+              onChange={(e) => setConfig(prev => ({ ...prev, free_shipping_threshold: parseFloat(e.target.value) || 0 }))}
+              className="w-full p-3 pr-8 border border-gold/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold/30"
+              min="0"
+              step="1"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-taupe">€</span>
+          </div>
+          <p className="text-xs text-taupe mt-1">
+            Mettez 0 pour désactiver la livraison gratuite
+          </p>
+        </div>
+      </Card>
+
+      <Card className="p-6 bg-white/80 backdrop-blur-sm border-gold/20">
+        <h3 className="font-display text-lg text-leather border-b border-gold/20 pb-2 mb-6">
+          Tarifs par transporteur
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-leather mb-2">
+              📦 Colissimo Suivi
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                value={config.colissimo_base_price}
+                onChange={(e) => setConfig(prev => ({ ...prev, colissimo_base_price: parseFloat(e.target.value) || 0 }))}
+                className="w-full p-3 pr-8 border border-gold/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold/30"
+                min="0"
+                step="0.10"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-taupe">€</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-leather mb-2">
+              🏪 Mondial Relay - Point Relais
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                value={config.mondial_relay_point_price}
+                onChange={(e) => setConfig(prev => ({ ...prev, mondial_relay_point_price: parseFloat(e.target.value) || 0 }))}
+                className="w-full p-3 pr-8 border border-gold/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold/30"
+                min="0"
+                step="0.10"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-taupe">€</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-leather mb-2">
+              🔐 Mondial Relay - Locker
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                value={config.mondial_relay_locker_price}
+                onChange={(e) => setConfig(prev => ({ ...prev, mondial_relay_locker_price: parseFloat(e.target.value) || 0 }))}
+                className="w-full p-3 pr-8 border border-gold/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold/30"
+                min="0"
+                step="0.10"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-taupe">€</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-leather mb-2">
+              🏠 Mondial Relay - Domicile
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                value={config.mondial_relay_home_price}
+                onChange={(e) => setConfig(prev => ({ ...prev, mondial_relay_home_price: parseFloat(e.target.value) || 0 }))}
+                className="w-full p-3 pr-8 border border-gold/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold/30"
+                min="0"
+                step="0.10"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-taupe">€</span>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-6 bg-white/80 backdrop-blur-sm border-gold/20">
+        <h3 className="font-display text-lg text-leather border-b border-gold/20 pb-2 mb-6">
+          Délais de traitement
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-leather mb-2">
+              Délai de préparation (jours ouvrés)
+            </label>
+            <select
+              value={config.processing_time}
+              onChange={(e) => setConfig(prev => ({ ...prev, processing_time: e.target.value }))}
+              className="w-full p-3 border border-gold/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-gold/30"
+            >
+              <option value="1">1 jour</option>
+              <option value="1-2">1-2 jours</option>
+              <option value="2-3">2-3 jours</option>
+              <option value="3-5">3-5 jours</option>
+              <option value="5-7">5-7 jours</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-gold/20 bg-champagne/10">
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={config.show_delivery_estimate}
+                onChange={(e) => setConfig(prev => ({ ...prev, show_delivery_estimate: e.target.checked }))}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gold/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-leather"></div>
+            </label>
+            <div>
+              <p className="font-medium text-leather text-sm">Afficher estimation de livraison</p>
+              <p className="text-xs text-taupe">Montre la date estimée sur les pages produit</p>
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
   )
 }
