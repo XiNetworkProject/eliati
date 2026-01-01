@@ -609,6 +609,26 @@ function ProductsTab({
   onDelete: (productId: string) => void
   onManageImages: (product: Product) => void
 }) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterCategory, setFilterCategory] = useState<string>('all')
+  const [filterStatus, setFilterStatus] = useState<string>('all')
+
+  // Filtrer les produits
+  const filteredProducts = products.filter((product) => {
+    // Recherche par nom
+    const matchesSearch = searchQuery === '' || 
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.slug.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    // Filtre par catégorie
+    const matchesCategory = filterCategory === 'all' || product.category_id === filterCategory
+    
+    // Filtre par statut
+    const matchesStatus = filterStatus === 'all' || product.status === filterStatus
+    
+    return matchesSearch && matchesCategory && matchesStatus
+  })
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -624,9 +644,89 @@ function ProductsTab({
         </Button>
       </div>
 
+      {/* Barre de recherche et filtres */}
+      <Card className="p-4 bg-white/80 backdrop-blur-sm border-gold/20">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+          {/* Recherche */}
+          <div className="flex-1 relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-taupe" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Rechercher un produit..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gold/30 bg-white/80 text-leather placeholder:text-taupe/60 focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-taupe hover:text-leather transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Filtre par catégorie */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-taupe whitespace-nowrap">Catégorie:</label>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gold/30 bg-white/80 text-leather text-sm focus:outline-none focus:ring-2 focus:ring-gold/30"
+            >
+              <option value="all">Toutes</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filtre par statut */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-taupe whitespace-nowrap">Statut:</label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gold/30 bg-white/80 text-leather text-sm focus:outline-none focus:ring-2 focus:ring-gold/30"
+            >
+              <option value="all">Tous</option>
+              <option value="active">Actif</option>
+              <option value="draft">Brouillon</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Compteur de résultats */}
+        <div className="mt-3 pt-3 border-t border-gold/10 flex items-center justify-between text-sm">
+          <span className="text-taupe">
+            {filteredProducts.length} produit{filteredProducts.length > 1 ? 's' : ''} trouvé{filteredProducts.length > 1 ? 's' : ''}
+            {(searchQuery || filterCategory !== 'all' || filterStatus !== 'all') && (
+              <span className="text-taupe/60"> sur {products.length}</span>
+            )}
+          </span>
+          {(searchQuery || filterCategory !== 'all' || filterStatus !== 'all') && (
+            <button
+              onClick={() => {
+                setSearchQuery('')
+                setFilterCategory('all')
+                setFilterStatus('all')
+              }}
+              className="text-leather hover:underline"
+            >
+              Réinitialiser les filtres
+            </button>
+          )}
+        </div>
+      </Card>
+
       {/* Liste des produits */}
       <div className="grid gap-4">
-        {products.map((product) => (
+        {filteredProducts.map((product) => (
           <Card key={product.id} className="group overflow-hidden bg-white/80 backdrop-blur-sm border-gold/20 hover:shadow-md transition-all duration-200">
             <div className="p-5 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5 text-center sm:text-left">
@@ -724,15 +824,21 @@ function ProductsTab({
         ))}
       </div>
 
-      {products.length === 0 && (
+      {filteredProducts.length === 0 && (
         <Card className="p-12 text-center bg-white/60 backdrop-blur-sm border-gold/20">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-champagne/30 to-champagne/10 border border-gold/20 flex items-center justify-center">
             <svg className="w-8 h-8 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
           </div>
-          <h3 className="font-display text-xl text-leather mb-2">Aucun produit</h3>
-          <p className="text-taupe text-sm">Commencez par ajouter votre premier produit</p>
+          <h3 className="font-display text-xl text-leather mb-2">
+            {products.length === 0 ? 'Aucun produit' : 'Aucun résultat'}
+          </h3>
+          <p className="text-taupe text-sm">
+            {products.length === 0 
+              ? 'Commencez par ajouter votre premier produit'
+              : 'Essayez de modifier vos critères de recherche'}
+          </p>
         </Card>
       )}
     </div>
@@ -786,10 +892,29 @@ function OrdersTab() {
   const [loadingOrders, setLoadingOrders] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null)
   const [orderItems, setOrderItems] = useState<Array<{ product_name: string; quantity: number; product_price_cents: number; charms: Array<{ label: string; price_cents: number }>; color?: string | null }>>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterStatus, setFilterStatus] = useState<string>('all')
 
   useEffect(() => {
     loadOrders()
   }, [])
+
+  // Filtrer les commandes
+  const filteredOrders = orders.filter((order) => {
+    // Recherche
+    const query = searchQuery.toLowerCase()
+    const matchesSearch = searchQuery === '' || 
+      order.customer_name?.toLowerCase().includes(query) ||
+      order.customer_email.toLowerCase().includes(query) ||
+      order.customer_phone?.toLowerCase().includes(query) ||
+      order.id.toLowerCase().includes(query) ||
+      order.paypal_order_id?.toLowerCase().includes(query)
+    
+    // Filtre par statut
+    const matchesStatus = filterStatus === 'all' || order.status === filterStatus
+    
+    return matchesSearch && matchesStatus
+  })
 
   const loadOrders = async () => {
     setLoadingOrders(true)
@@ -860,24 +985,97 @@ function OrdersTab() {
         </Button>
       </div>
 
+      {/* Barre de recherche et filtres */}
+      <Card className="p-4 bg-white/80 backdrop-blur-sm border-gold/20">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+          {/* Recherche */}
+          <div className="flex-1 relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-taupe" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Rechercher (nom, email, n° commande...)"
+              className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gold/30 bg-white/80 text-leather placeholder:text-taupe/60 focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold/50 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-taupe hover:text-leather transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Filtre par statut */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-taupe whitespace-nowrap">Statut:</label>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-gold/30 bg-white/80 text-leather text-sm focus:outline-none focus:ring-2 focus:ring-gold/30"
+            >
+              <option value="all">Tous</option>
+              <option value="pending">En attente</option>
+              <option value="paid">Payée</option>
+              <option value="shipped">Expédiée</option>
+              <option value="delivered">Livrée</option>
+              <option value="cancelled">Annulée</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Compteur */}
+        <div className="mt-3 pt-3 border-t border-gold/10 flex items-center justify-between text-sm">
+          <span className="text-taupe">
+            {filteredOrders.length} commande{filteredOrders.length > 1 ? 's' : ''}
+            {(searchQuery || filterStatus !== 'all') && (
+              <span className="text-taupe/60"> sur {orders.length}</span>
+            )}
+          </span>
+          {(searchQuery || filterStatus !== 'all') && (
+            <button
+              onClick={() => {
+                setSearchQuery('')
+                setFilterStatus('all')
+              }}
+              className="text-leather hover:underline"
+            >
+              Réinitialiser
+            </button>
+          )}
+        </div>
+      </Card>
+
       {loadingOrders ? (
         <Card className="p-8 text-center bg-white/80 backdrop-blur-sm border-gold/20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-leather mx-auto mb-3"></div>
           <p className="text-taupe text-sm">Chargement des commandes...</p>
         </Card>
-      ) : orders.length === 0 ? (
+      ) : filteredOrders.length === 0 ? (
         <Card className="p-12 text-center bg-white/80 backdrop-blur-sm border-gold/20">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-champagne/30 to-champagne/10 border border-gold/20 flex items-center justify-center">
             <svg className="w-8 h-8 text-leather" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
           </div>
-          <h3 className="font-display text-xl text-leather mb-2">Aucune commande</h3>
-          <p className="text-taupe text-sm">Les commandes apparaîtront ici</p>
+          <h3 className="font-display text-xl text-leather mb-2">
+            {orders.length === 0 ? 'Aucune commande' : 'Aucun résultat'}
+          </h3>
+          <p className="text-taupe text-sm">
+            {orders.length === 0 
+              ? 'Les commandes apparaîtront ici'
+              : 'Essayez de modifier vos critères de recherche'}
+          </p>
         </Card>
       ) : (
         <div className="grid gap-4">
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <Card key={order.id} className="overflow-hidden bg-white/80 backdrop-blur-sm border-gold/20 hover:shadow-lg transition-all">
               <div className="p-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-4">
