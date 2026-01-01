@@ -14,14 +14,18 @@ CREATE TABLE IF NOT EXISTS public.site_settings (
 -- Activer RLS
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 
+-- Supprimer les anciennes policies si elles existent
+DROP POLICY IF EXISTS "public read site_settings" ON public.site_settings;
+DROP POLICY IF EXISTS "allow all for site_settings" ON public.site_settings;
+
 -- Politique de lecture publique
-CREATE POLICY IF NOT EXISTS "public read site_settings" 
+CREATE POLICY "public read site_settings" 
 ON public.site_settings 
 FOR SELECT 
 USING (true);
 
 -- Politique d'écriture (tous autorisés pour simplifier - à restreindre en production)
-CREATE POLICY IF NOT EXISTS "allow all for site_settings" 
+CREATE POLICY "allow all for site_settings" 
 ON public.site_settings 
 FOR ALL 
 USING (true) 
