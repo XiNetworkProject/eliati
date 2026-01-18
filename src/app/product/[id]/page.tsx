@@ -112,6 +112,14 @@ export default async function ProductPage({
     ;[shuffledRandom[i], shuffledRandom[j]] = [shuffledRandom[j], shuffledRandom[i]]
   }
 
+  const { data: newArrivalsData } = await supabaseServer
+    .from('products')
+    .select(recommendedSelect)
+    .neq('id', product.id)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(4)
+
   const sortedImages = Array.isArray(product.product_images)
     ? [...product.product_images].sort(
         (a: { sort_order?: number | null }, b: { sort_order?: number | null }) =>
@@ -223,6 +231,7 @@ export default async function ProductPage({
             sameCategory: (sameCategoryData || []).map(mapRecommended),
             topRated: (topRatedData || []).map(mapRecommended),
             randomPicks: shuffledRandom.slice(0, 4).map(mapRecommended),
+            newArrivals: (newArrivalsData || []).map(mapRecommended),
           }}
         />
       </main>

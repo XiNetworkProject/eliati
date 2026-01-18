@@ -24,6 +24,7 @@ type ProductRecommendationsProps = {
   initialSameCategory?: RecommendedProduct[]
   initialTopRated?: RecommendedProduct[]
   initialRandomPicks?: RecommendedProduct[]
+  initialNewArrivals?: RecommendedProduct[]
 }
 
 export default function ProductRecommendations({
@@ -34,11 +35,13 @@ export default function ProductRecommendations({
   initialSameCategory,
   initialTopRated,
   initialRandomPicks,
+  initialNewArrivals,
 }: ProductRecommendationsProps) {
   const [sameCategory, setSameCategory] = useState<RecommendedProduct[]>(initialSameCategory || [])
   const [topRated, setTopRated] = useState<RecommendedProduct[]>(initialTopRated || [])
   const [randomPicks, setRandomPicks] = useState<RecommendedProduct[]>(initialRandomPicks || [])
   const [recentlyViewed, setRecentlyViewed] = useState<RecommendedProduct[]>([])
+  const [newArrivals, setNewArrivals] = useState<RecommendedProduct[]>(initialNewArrivals || [])
   const [loading, setLoading] = useState(
     !initialSameCategory && !initialTopRated && !initialRandomPicks
   )
@@ -104,7 +107,8 @@ export default function ProductRecommendations({
       const hasInitialData =
         initialSameCategory !== undefined ||
         initialTopRated !== undefined ||
-        initialRandomPicks !== undefined
+        initialRandomPicks !== undefined ||
+        initialNewArrivals !== undefined
 
       if (!hasInitialData) {
         setLoading(true)
@@ -115,6 +119,7 @@ export default function ProductRecommendations({
           setSameCategory(initialSameCategory || [])
           setTopRated(initialTopRated || [])
           setRandomPicks(initialRandomPicks || [])
+          setNewArrivals(initialNewArrivals || [])
         } else {
           // Produits de la même catégorie
           if (categoryId) {
@@ -196,6 +201,29 @@ export default function ProductRecommendations({
               }))
             )
           }
+
+          const { data: newestProducts } = await supabase
+            .from('products')
+            .select('id, name, slug, price_cents, compare_at_cents, average_rating, review_count, product_images(url)')
+            .neq('id', productId)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(4)
+
+          if (newestProducts) {
+            setNewArrivals(
+              newestProducts.map((p) => ({
+                id: p.id,
+                name: p.name,
+                slug: p.slug,
+                price_cents: p.price_cents,
+                compare_at_cents: p.compare_at_cents,
+                image_url: p.product_images?.[0]?.url || null,
+                average_rating: p.average_rating,
+                review_count: p.review_count,
+              }))
+            )
+          }
         }
         
         // Produits récemment vus
@@ -217,6 +245,7 @@ export default function ProductRecommendations({
     initialSameCategory,
     initialTopRated,
     initialRandomPicks,
+    initialNewArrivals,
   ])
 
   const renderStars = (rating: number | null) => {
@@ -361,7 +390,12 @@ export default function ProductRecommendations({
     )
   }
 
-  const hasAnyRecommendations = sameCategory.length > 0 || topRated.length > 0 || randomPicks.length > 0 || recentlyViewed.length > 0
+  const hasAnyRecommendations =
+    sameCategory.length > 0 ||
+    topRated.length > 0 ||
+    randomPicks.length > 0 ||
+    recentlyViewed.length > 0 ||
+    newArrivals.length > 0
 
   if (!hasAnyRecommendations) {
     return null
@@ -408,6 +442,18 @@ export default function ProductRecommendations({
           subtitle="Reprenez où vous en étiez"
           icon="👁️"
           products={recentlyViewed}
+        />
+      )}
+
+      {/* Nouveautés si rien d'autre */}
+      {newArrivals.length > 0 && sameCategory.length === 0 && topRated.length === 0 && randomPicks.length === 0 && recentlyViewed.length === 0 && (
+        <RecommendationSection
+          title="Nouveautés"
+          subtitle="Les dernières pièces ajoutées"
+          icon="🆕"
+          products={newArrivals}
+          viewAllLink="/new"
+          viewAllText="Voir les nouveautés"
         />
       )}
     </div>

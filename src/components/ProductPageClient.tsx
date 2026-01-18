@@ -44,6 +44,7 @@ type ProductPageClientProps = {
     sameCategory: RecommendedProduct[]
     topRated: RecommendedProduct[]
     randomPicks: RecommendedProduct[]
+    newArrivals: RecommendedProduct[]
   }
 }
 
@@ -200,6 +201,7 @@ export default function ProductPageClient({
           initialSameCategory={recommendations?.sameCategory}
           initialTopRated={recommendations?.topRated}
           initialRandomPicks={recommendations?.randomPicks}
+          initialNewArrivals={recommendations?.newArrivals}
         />
       </div>
     </div>
