@@ -4,6 +4,7 @@ import { cormorant, inter, allura } from "./fonts";
 import { cn } from "@/lib/utils";
 import { CartProvider } from "@/contexts/CartContext";
 import { SiteSettingsProvider } from "@/contexts/SiteSettingsContext";
+import { CompareProvider } from "@/contexts/CompareContext";
 import { getSiteConfig } from "@/lib/site-settings";
 import { DEFAULT_SITE_CONFIG } from "@/lib/site-settings-defaults";
 
@@ -44,7 +45,9 @@ export default function RootLayout({
         )}
       >
         <CartProvider>
-          <SiteSettingsProvider>{children}</SiteSettingsProvider>
+          <CompareProvider>
+            <SiteSettingsProvider>{children}</SiteSettingsProvider>
+          </CompareProvider>
         </CartProvider>
       </body>
     </html>
