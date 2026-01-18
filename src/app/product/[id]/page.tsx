@@ -159,6 +159,17 @@ export default async function ProductPage({
           .order('created_at', { ascending: false })
           .limit(4)
 
+  const productFallback = mapRecommended({
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    price_cents: product.price_cents,
+    compare_at_cents: product.compare_at_cents,
+    average_rating: product.average_rating ?? null,
+    review_count: product.review_count ?? null,
+    product_images: Array.isArray(product.product_images) ? product.product_images : [],
+  })
+
   const sortedImages = Array.isArray(product.product_images)
     ? [...product.product_images].sort(
         (a: { sort_order?: number | null }, b: { sort_order?: number | null }) =>
@@ -281,7 +292,9 @@ export default async function ProductPage({
             newArrivals:
               (newArrivalsData && newArrivalsData.length > 0
                 ? newArrivalsData
-                : fallbackNewArrivals || []
+                : fallbackNewArrivals && fallbackNewArrivals.length > 0
+                  ? fallbackNewArrivals
+                  : [productFallback]
               ).map(mapRecommended),
           }}
         />

@@ -445,8 +445,8 @@ export default function ProductRecommendations({
         />
       )}
 
-      {/* Nouveautés si rien d'autre */}
-      {newArrivals.length > 0 && sameCategory.length === 0 && topRated.length === 0 && randomPicks.length === 0 && recentlyViewed.length === 0 && (
+      {/* Nouveautés */}
+      {newArrivals.length > 0 && (
         <RecommendationSection
           title="Nouveautés"
           subtitle="Les dernières pièces ajoutées"
