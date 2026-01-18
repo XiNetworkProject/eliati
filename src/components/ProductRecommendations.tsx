@@ -20,12 +20,14 @@ type ProductRecommendationsProps = {
   productId: string
   categoryId?: string | null
   categoryName?: string | null
+  categorySlug?: string | null
 }
 
 export default function ProductRecommendations({
   productId,
   categoryId,
   categoryName,
+  categorySlug,
 }: ProductRecommendationsProps) {
   const [sameCategory, setSameCategory] = useState<RecommendedProduct[]>([])
   const [topRated, setTopRated] = useState<RecommendedProduct[]>([])
@@ -346,7 +348,7 @@ export default function ProductRecommendations({
           subtitle="Découvrez d'autres pièces de cette collection"
           icon="✨"
           products={sameCategory}
-          viewAllLink={categoryId ? `/category/${categoryName.toLowerCase().replace(/[^a-z]/g, '')}` : undefined}
+          viewAllLink={categorySlug ? `/category/${categorySlug}` : undefined}
           viewAllText="Voir la collection"
         />
       )}

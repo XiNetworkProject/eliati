@@ -14,7 +14,7 @@ export default async function ProductPage({
   // Charger le produit avec images et catégorie
   const { data: product, error } = await supabase
     .from('products')
-    .select('*,product_images(id,url,alt,sort_order,color_name),categories(id,name)')
+    .select('*,product_images(id,url,alt,sort_order,color_name),categories(id,name,slug)')
     .eq('id', id)
     .single()
 
@@ -160,6 +160,7 @@ export default async function ProductPage({
           }}
           categoryId={product.categories?.id ?? null}
           categoryName={product.categories?.name ?? null}
+          categorySlug={product.categories?.slug ?? null}
           charmOptions={charmOptions}
           images={galleryImages}
           primaryImage={primaryImage}

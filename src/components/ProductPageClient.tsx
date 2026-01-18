@@ -35,6 +35,7 @@ type ProductPageClientProps = {
   product: ProductData
   categoryId: string | null
   categoryName: string | null
+  categorySlug: string | null
   charmOptions: Array<{ label: string; price_cents: number }>
   images: ProductGalleryImage[]
   primaryImage: string
@@ -45,6 +46,7 @@ export default function ProductPageClient({
   product,
   categoryId,
   categoryName,
+  categorySlug,
   charmOptions,
   images,
   primaryImage,
@@ -106,7 +108,7 @@ export default function ProductPageClient({
         {categoryName && (
           <>
             <Link 
-              href={`/category/${categoryName.toLowerCase().replace(/[^a-z]/g, '')}`} 
+              href={categorySlug ? `/category/${categorySlug}` : '#'} 
               className="text-taupe hover:text-leather transition-colors"
             >
               {categoryName}
@@ -188,6 +190,7 @@ export default function ProductPageClient({
           productId={product.id}
           categoryId={categoryId}
           categoryName={categoryName}
+          categorySlug={categorySlug}
         />
       </div>
     </div>
