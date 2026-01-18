@@ -1,21 +1,60 @@
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import MainCarousel from '@/components/MainCarousel'
-import CategoryTiles from '@/components/CategoryTiles'
+import MainCarousel, { CarouselSlide } from '@/components/MainCarousel'
+import CategoryTiles, { CategoryWithProducts } from '@/components/CategoryTiles'
 import Section from '@/components/Section'
 import ProductGrid from '@/components/ProductGrid'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase-server'
 import { getSiteConfig } from '@/lib/site-settings'
 import Link from 'next/link'
 
 export default async function Home() {
   const siteConfig = await getSiteConfig()
-  const { data: products } = await supabase
+  const { data: products } = await supabaseServer
     .from('products')
     .select('id,name,slug,price_cents,compare_at_cents,product_images(url)')
     .eq('status', 'active')
     .order('created_at', { ascending: false })
     .limit(8)
+
+  const { data: categoriesData } = await supabaseServer
+    .from('categories')
+    .select('id, name, slug, image_url')
+    .order('name')
+
+  const categoriesWithProducts: CategoryWithProducts[] = categoriesData
+    ? await Promise.all(
+        categoriesData.map(async (cat) => {
+          const { data: categoryProducts } = await supabaseServer
+            .from('products')
+            .select('id, name, product_images(url)')
+            .eq('category_id', cat.id)
+            .eq('status', 'active')
+            .limit(5)
+
+          const productImages = (categoryProducts || [])
+            .filter((p) => p.product_images && p.product_images.length > 0)
+            .map((p) => ({
+              id: p.id,
+              name: p.name,
+              image_url: p.product_images?.[0]?.url || null,
+            }))
+
+          return {
+            ...cat,
+            products: productImages,
+          }
+        })
+      )
+    : []
+
+  const { data: slidesData } = await supabaseServer
+    .from('carousel_slides')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
+
+  const slides = (slidesData || []) as CarouselSlide[]
 
   const mapped = (products ?? []).map((p, index) => ({
     id: p.id,
@@ -84,7 +123,7 @@ export default async function Home() {
         {/* Carousel Section */}
         <section className="py-8 sm:py-12 bg-ivory">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <MainCarousel />
+            <MainCarousel initialSlides={slides} />
           </div>
         </section>
 
@@ -102,7 +141,7 @@ export default async function Home() {
                 Parcourez nos collections et trouvez le bijou qui vous ressemble
               </p>
             </div>
-            <CategoryTiles />
+            <CategoryTiles initialCategories={categoriesWithProducts} />
           </div>
         </section>
 

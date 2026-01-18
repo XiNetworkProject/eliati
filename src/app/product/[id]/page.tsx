@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import { supabase } from '@/lib/supabase'
+import { supabaseServer } from '@/lib/supabase-server'
 import ProductPageClient from '@/components/ProductPageClient'
 
 export default async function ProductPage({
@@ -12,14 +12,14 @@ export default async function ProductPage({
   const { id } = await params
   
   // Charger le produit avec images et catégorie
-  const { data: product, error } = await supabase
+  const { data: product, error } = await supabaseServer
     .from('products')
     .select('*,product_images(id,url,alt,sort_order,color_name),categories(id,name,slug)')
     .eq('id', id)
     .single()
 
   // Charger les variantes du produit
-  const { data: variantsData } = await supabase
+  const { data: variantsData } = await supabaseServer
     .from('product_variants')
     .select('id, color_name, stock_quantity, low_stock_threshold, price_cents, is_active')
     .eq('product_id', id)
@@ -56,6 +56,60 @@ export default async function ProductPage({
         <Footer />
       </div>
     )
+  }
+
+  const recommendedSelect =
+    'id, name, slug, price_cents, compare_at_cents, average_rating, review_count, product_images(url)'
+  const mapRecommended = (p: {
+    id: string
+    name: string
+    slug: string
+    price_cents: number
+    compare_at_cents: number | null
+    average_rating: number | null
+    review_count: number | null
+    product_images?: Array<{ url?: string | null }> | null
+  }) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    price_cents: p.price_cents,
+    compare_at_cents: p.compare_at_cents,
+    image_url: p.product_images?.[0]?.url || null,
+    average_rating: p.average_rating,
+    review_count: p.review_count,
+  })
+
+  const { data: sameCategoryData } = product.categories?.id
+    ? await supabaseServer
+        .from('products')
+        .select(recommendedSelect)
+        .eq('category_id', product.categories.id)
+        .neq('id', product.id)
+        .eq('status', 'active')
+        .limit(4)
+    : { data: [] }
+
+  const { data: topRatedData } = await supabaseServer
+    .from('products')
+    .select(recommendedSelect)
+    .neq('id', product.id)
+    .eq('status', 'active')
+    .gt('average_rating', 0)
+    .order('average_rating', { ascending: false })
+    .limit(4)
+
+  const { data: randomPool } = await supabaseServer
+    .from('products')
+    .select(recommendedSelect)
+    .neq('id', product.id)
+    .eq('status', 'active')
+    .limit(20)
+
+  const shuffledRandom = (randomPool || []).slice()
+  for (let i = shuffledRandom.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffledRandom[i], shuffledRandom[j]] = [shuffledRandom[j], shuffledRandom[i]]
   }
 
   const sortedImages = Array.isArray(product.product_images)
@@ -165,6 +219,11 @@ export default async function ProductPage({
           images={galleryImages}
           primaryImage={primaryImage}
           variants={variants}
+          recommendations={{
+            sameCategory: (sameCategoryData || []).map(mapRecommended),
+            topRated: (topRatedData || []).map(mapRecommended),
+            randomPicks: shuffledRandom.slice(0, 4).map(mapRecommended),
+          }}
         />
       </main>
       <Footer />

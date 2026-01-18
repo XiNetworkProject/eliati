@@ -5,7 +5,7 @@ import Link from 'next/link'
 import ProductGallery, { ProductGalleryImage } from '@/components/ProductGallery'
 import ProductConfigurator from '@/components/ProductConfigurator'
 import ProductReviews from '@/components/ProductReviews'
-import ProductRecommendations from '@/components/ProductRecommendations'
+import ProductRecommendations, { RecommendedProduct } from '@/components/ProductRecommendations'
 
 type ProductData = {
   id: string
@@ -40,6 +40,11 @@ type ProductPageClientProps = {
   images: ProductGalleryImage[]
   primaryImage: string
   variants?: ProductVariant[]
+  recommendations?: {
+    sameCategory: RecommendedProduct[]
+    topRated: RecommendedProduct[]
+    randomPicks: RecommendedProduct[]
+  }
 }
 
 export default function ProductPageClient({
@@ -51,6 +56,7 @@ export default function ProductPageClient({
   images,
   primaryImage,
   variants = [],
+  recommendations,
 }: ProductPageClientProps) {
   const [selectedColor, setSelectedColor] = useState<string | null>(() => {
     const firstActive = variants.find((v) => v.is_active && v.stock_quantity > 0)
@@ -191,6 +197,9 @@ export default function ProductPageClient({
           categoryId={categoryId}
           categoryName={categoryName}
           categorySlug={categorySlug}
+          initialSameCategory={recommendations?.sameCategory}
+          initialTopRated={recommendations?.topRated}
+          initialRandomPicks={recommendations?.randomPicks}
         />
       </div>
     </div>

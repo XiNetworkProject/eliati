@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 
-type RecommendedProduct = {
+export type RecommendedProduct = {
   id: string
   name: string
   slug: string
@@ -21,6 +21,9 @@ type ProductRecommendationsProps = {
   categoryId?: string | null
   categoryName?: string | null
   categorySlug?: string | null
+  initialSameCategory?: RecommendedProduct[]
+  initialTopRated?: RecommendedProduct[]
+  initialRandomPicks?: RecommendedProduct[]
 }
 
 export default function ProductRecommendations({
@@ -28,12 +31,17 @@ export default function ProductRecommendations({
   categoryId,
   categoryName,
   categorySlug,
+  initialSameCategory,
+  initialTopRated,
+  initialRandomPicks,
 }: ProductRecommendationsProps) {
-  const [sameCategory, setSameCategory] = useState<RecommendedProduct[]>([])
-  const [topRated, setTopRated] = useState<RecommendedProduct[]>([])
-  const [randomPicks, setRandomPicks] = useState<RecommendedProduct[]>([])
+  const [sameCategory, setSameCategory] = useState<RecommendedProduct[]>(initialSameCategory || [])
+  const [topRated, setTopRated] = useState<RecommendedProduct[]>(initialTopRated || [])
+  const [randomPicks, setRandomPicks] = useState<RecommendedProduct[]>(initialRandomPicks || [])
   const [recentlyViewed, setRecentlyViewed] = useState<RecommendedProduct[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(
+    !initialSameCategory && !initialTopRated && !initialRandomPicks
+  )
 
   // Sauvegarder dans l'historique
   useEffect(() => {
@@ -93,22 +101,60 @@ export default function ProductRecommendations({
   // Charger les recommandations
   useEffect(() => {
     const loadRecommendations = async () => {
-      setLoading(true)
+      const hasInitialData =
+        initialSameCategory !== undefined ||
+        initialTopRated !== undefined ||
+        initialRandomPicks !== undefined
+
+      if (!hasInitialData) {
+        setLoading(true)
+      }
       
       try {
-        // Produits de la même catégorie
-        if (categoryId) {
-          const { data: catProducts } = await supabase
+        if (hasInitialData) {
+          setSameCategory(initialSameCategory || [])
+          setTopRated(initialTopRated || [])
+          setRandomPicks(initialRandomPicks || [])
+        } else {
+          // Produits de la même catégorie
+          if (categoryId) {
+            const { data: catProducts } = await supabase
+              .from('products')
+              .select('id, name, slug, price_cents, compare_at_cents, average_rating, review_count, product_images(url)')
+              .eq('category_id', categoryId)
+              .neq('id', productId)
+              .eq('status', 'active')
+              .limit(4)
+            
+            if (catProducts) {
+              setSameCategory(
+                catProducts.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  slug: p.slug,
+                  price_cents: p.price_cents,
+                  compare_at_cents: p.compare_at_cents,
+                  image_url: p.product_images?.[0]?.url || null,
+                  average_rating: p.average_rating,
+                  review_count: p.review_count,
+                }))
+              )
+            }
+          }
+          
+          // Produits les mieux notés
+          const { data: ratedProducts } = await supabase
             .from('products')
             .select('id, name, slug, price_cents, compare_at_cents, average_rating, review_count, product_images(url)')
-            .eq('category_id', categoryId)
             .neq('id', productId)
             .eq('status', 'active')
+            .gt('average_rating', 0)
+            .order('average_rating', { ascending: false })
             .limit(4)
           
-          if (catProducts) {
-            setSameCategory(
-              catProducts.map((p) => ({
+          if (ratedProducts) {
+            setTopRated(
+              ratedProducts.map((p) => ({
                 id: p.id,
                 name: p.name,
                 slug: p.slug,
@@ -120,61 +166,36 @@ export default function ProductRecommendations({
               }))
             )
           }
-        }
-        
-        // Produits les mieux notés
-        const { data: ratedProducts } = await supabase
-          .from('products')
-          .select('id, name, slug, price_cents, compare_at_cents, average_rating, review_count, product_images(url)')
-          .neq('id', productId)
-          .eq('status', 'active')
-          .gt('average_rating', 0)
-          .order('average_rating', { ascending: false })
-          .limit(4)
-        
-        if (ratedProducts) {
-          setTopRated(
-            ratedProducts.map((p) => ({
-              id: p.id,
-              name: p.name,
-              slug: p.slug,
-              price_cents: p.price_cents,
-              compare_at_cents: p.compare_at_cents,
-              image_url: p.product_images?.[0]?.url || null,
-              average_rating: p.average_rating,
-              review_count: p.review_count,
-            }))
-          )
-        }
 
-        // Produits aléatoires - on récupère plus et on mélange côté client
-        const { data: allProducts } = await supabase
-          .from('products')
-          .select('id, name, slug, price_cents, compare_at_cents, average_rating, review_count, product_images(url)')
-          .neq('id', productId)
-          .eq('status', 'active')
-          .limit(20)
-        
-        if (allProducts && allProducts.length > 0) {
-          // Mélanger avec Fisher-Yates
-          const shuffled = [...allProducts]
-          for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1))
-            ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
-          }
+          // Produits aléatoires - on récupère plus et on mélange côté client
+          const { data: allProducts } = await supabase
+            .from('products')
+            .select('id, name, slug, price_cents, compare_at_cents, average_rating, review_count, product_images(url)')
+            .neq('id', productId)
+            .eq('status', 'active')
+            .limit(20)
           
-          setRandomPicks(
-            shuffled.slice(0, 4).map((p) => ({
-              id: p.id,
-              name: p.name,
-              slug: p.slug,
-              price_cents: p.price_cents,
-              compare_at_cents: p.compare_at_cents,
-              image_url: p.product_images?.[0]?.url || null,
-              average_rating: p.average_rating,
-              review_count: p.review_count,
-            }))
-          )
+          if (allProducts && allProducts.length > 0) {
+            // Mélanger avec Fisher-Yates
+            const shuffled = [...allProducts]
+            for (let i = shuffled.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1))
+              ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+            }
+            
+            setRandomPicks(
+              shuffled.slice(0, 4).map((p) => ({
+                id: p.id,
+                name: p.name,
+                slug: p.slug,
+                price_cents: p.price_cents,
+                compare_at_cents: p.compare_at_cents,
+                image_url: p.product_images?.[0]?.url || null,
+                average_rating: p.average_rating,
+                review_count: p.review_count,
+              }))
+            )
+          }
         }
         
         // Produits récemment vus
@@ -189,7 +210,14 @@ export default function ProductRecommendations({
     }
     
     loadRecommendations()
-  }, [productId, categoryId, loadRecentlyViewed])
+  }, [
+    productId,
+    categoryId,
+    loadRecentlyViewed,
+    initialSameCategory,
+    initialTopRated,
+    initialRandomPicks,
+  ])
 
   const renderStars = (rating: number | null) => {
     const stars = rating ? Math.round(rating) : 0

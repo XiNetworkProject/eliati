@@ -4,31 +4,43 @@ import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import Image from 'next/image'
 
-type Category = {
+export type Category = {
   id: string
   name: string
   slug: string
   image_url: string | null
 }
 
-type CategoryProduct = {
+export type CategoryProduct = {
   id: string
   name: string
   image_url: string | null
 }
 
-type CategoryWithProducts = Category & {
+export type CategoryWithProducts = Category & {
   products: CategoryProduct[]
 }
 
 const TRANSITION_INTERVAL = 4000 // 4 secondes entre chaque image
 
-export default function CategoryTiles() {
-  const [categories, setCategories] = useState<CategoryWithProducts[]>([])
-  const [loading, setLoading] = useState(true)
+type CategoryTilesProps = {
+  initialCategories?: CategoryWithProducts[]
+}
+
+export default function CategoryTiles({ initialCategories = [] }: CategoryTilesProps) {
+  const [categories, setCategories] = useState<CategoryWithProducts[]>(initialCategories)
+  const [loading, setLoading] = useState(initialCategories.length === 0)
   const [activeIndexes, setActiveIndexes] = useState<Record<string, number>>({})
 
   useEffect(() => {
+    if (initialCategories.length > 0) {
+      const initialIndexes: Record<string, number> = {}
+      initialCategories.forEach((cat) => {
+        initialIndexes[cat.id] = 0
+      })
+      setActiveIndexes(initialIndexes)
+      return
+    }
     const loadCategoriesWithProducts = async () => {
       // Charger les catégories
       const { data: categoriesData } = await supabase
@@ -77,7 +89,7 @@ export default function CategoryTiles() {
     }
 
     loadCategoriesWithProducts()
-  }, [])
+  }, [initialCategories])
 
   // Rotation automatique des images
   const rotateImages = useCallback(() => {

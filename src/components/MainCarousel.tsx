@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
 import Link from 'next/link'
 
-type CarouselSlide = {
+export type CarouselSlide = {
   id: string
   title: string | null
   subtitle: string | null
@@ -16,12 +16,17 @@ type CarouselSlide = {
   is_active: boolean
 }
 
-export default function MainCarousel() {
+type MainCarouselProps = {
+  initialSlides?: CarouselSlide[]
+}
+
+export default function MainCarousel({ initialSlides = [] }: MainCarouselProps) {
   const [emblaRef, embla] = useEmblaCarousel({ loop: true })
-  const [slides, setSlides] = useState<CarouselSlide[]>([])
-  const [loading, setLoading] = useState(true)
+  const [slides, setSlides] = useState<CarouselSlide[]>(initialSlides)
+  const [loading, setLoading] = useState(initialSlides.length === 0)
 
   useEffect(() => {
+    if (initialSlides.length > 0) return
     const loadSlides = async () => {
       const { data } = await supabase
         .from('carousel_slides')
@@ -33,7 +38,7 @@ export default function MainCarousel() {
       setLoading(false)
     }
     loadSlides()
-  }, [])
+  }, [initialSlides.length])
 
   useEffect(() => {
     if (!embla) return
