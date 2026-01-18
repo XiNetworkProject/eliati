@@ -120,6 +120,16 @@ export default async function ProductPage({
     .order('created_at', { ascending: false })
     .limit(4)
 
+  const { data: fallbackNewArrivals } =
+    newArrivalsData && newArrivalsData.length > 0
+      ? { data: [] }
+      : await supabaseServer
+          .from('products')
+          .select(recommendedSelect)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(4)
+
   const sortedImages = Array.isArray(product.product_images)
     ? [...product.product_images].sort(
         (a: { sort_order?: number | null }, b: { sort_order?: number | null }) =>
@@ -231,7 +241,11 @@ export default async function ProductPage({
             sameCategory: (sameCategoryData || []).map(mapRecommended),
             topRated: (topRatedData || []).map(mapRecommended),
             randomPicks: shuffledRandom.slice(0, 4).map(mapRecommended),
-            newArrivals: (newArrivalsData || []).map(mapRecommended),
+            newArrivals:
+              (newArrivalsData && newArrivalsData.length > 0
+                ? newArrivalsData
+                : fallbackNewArrivals || []
+              ).map(mapRecommended),
           }}
         />
       </main>
