@@ -1,19 +1,32 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import "@/app/globals.css";
 import { cormorant, inter, allura } from "./fonts";
 import { cn } from "@/lib/utils";
 import { CartProvider } from "@/contexts/CartContext";
-import { CompareProvider } from "@/contexts/CompareContext";
+import { SiteSettingsProvider } from "@/contexts/SiteSettingsContext";
+import { getSiteConfig } from "@/lib/site-settings";
+import { DEFAULT_SITE_CONFIG } from "@/lib/site-settings-defaults";
 
-export const metadata: Metadata = {
-  title: "EliAti - Bijoux",
-  description: "Bijoux faits main - colliers, boucles, bagues, bracelets.",
-  icons: {
-    icon: "/favicon.svg",
-    apple: "/favicon.svg",
-    shortcut: "/favicon.svg",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await getSiteConfig();
+  const fallback = DEFAULT_SITE_CONFIG;
+
+  const title = config.meta_title || config.site_name || fallback.meta_title;
+  const description = config.meta_description || fallback.meta_description;
+  const favicon = config.favicon_url || "/favicon.svg";
+  const keywords = config.meta_keywords || fallback.meta_keywords;
+
+  return {
+    title,
+    description,
+    keywords,
+    icons: {
+      icon: favicon,
+      apple: favicon,
+      shortcut: favicon,
+    },
+  };
+}
 
 export default function RootLayout({
   children,
@@ -30,11 +43,9 @@ export default function RootLayout({
           "bg-ivory text-leather antialiased"
         )}
       >
-        <CompareProvider>
-          <CartProvider>
-            {children}
-          </CartProvider>
-        </CompareProvider>
+        <CartProvider>
+          <SiteSettingsProvider>{children}</SiteSettingsProvider>
+        </CartProvider>
       </body>
     </html>
   );

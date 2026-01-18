@@ -5,67 +5,9 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { DEFAULT_SITE_CONFIG, SiteConfig } from '@/lib/site-settings-defaults'
 
-type SiteConfig = {
-  // Informations générales
-  site_name: string
-  slogan: string
-  description: string
-  logo_url: string | null
-  favicon_url: string | null
-  
-  // Coordonnées
-  contact_email: string
-  contact_phone: string
-  address: string
-  city: string
-  postal_code: string
-  country: string
-  
-  // Réseaux sociaux
-  instagram_url: string
-  facebook_url: string
-  tiktok_url: string
-  pinterest_url: string
-  youtube_url: string
-  
-  // SEO
-  meta_title: string
-  meta_description: string
-  meta_keywords: string
-  
-  // Options
-  show_promo_banner: boolean
-  promo_banner_text: string
-  maintenance_mode: boolean
-  maintenance_message: string
-}
-
-const DEFAULT_CONFIG: SiteConfig = {
-  site_name: 'EliAti',
-  slogan: 'Bijoux artisanaux faits main',
-  description: '',
-  logo_url: null,
-  favicon_url: null,
-  contact_email: '',
-  contact_phone: '',
-  address: '',
-  city: '',
-  postal_code: '',
-  country: 'France',
-  instagram_url: '',
-  facebook_url: '',
-  tiktok_url: '',
-  pinterest_url: '',
-  youtube_url: '',
-  meta_title: '',
-  meta_description: '',
-  meta_keywords: '',
-  show_promo_banner: false,
-  promo_banner_text: '',
-  maintenance_mode: false,
-  maintenance_message: 'Le site est en maintenance. Revenez bientôt !',
-}
+const DEFAULT_CONFIG: SiteConfig = DEFAULT_SITE_CONFIG
 
 type SettingsSection = 'general' | 'contact' | 'social' | 'seo' | 'options'
 
@@ -77,6 +19,8 @@ export default function SiteSettings() {
   const [activeSection, setActiveSection] = useState<SettingsSection>('general')
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [faviconFile, setFaviconFile] = useState<File | null>(null)
+  const [faviconPreview, setFaviconPreview] = useState<string | null>(null)
 
   useEffect(() => {
     loadConfig()
@@ -95,6 +39,9 @@ export default function SiteSettings() {
         setConfig({ ...DEFAULT_CONFIG, ...(data.setting_value as Partial<SiteConfig>) })
         if ((data.setting_value as SiteConfig).logo_url) {
           setLogoPreview((data.setting_value as SiteConfig).logo_url)
+        }
+        if ((data.setting_value as SiteConfig).favicon_url) {
+          setFaviconPreview((data.setting_value as SiteConfig).favicon_url)
         }
       }
     } catch (error) {
@@ -116,10 +63,23 @@ export default function SiteSettings() {
     }
   }
 
+  const handleFaviconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setFaviconFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setFaviconPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true)
     try {
       let logoUrl = config.logo_url
+      let faviconUrl = config.favicon_url
 
       // Upload du logo si nouveau fichier
       if (logoFile) {
@@ -138,7 +98,24 @@ export default function SiteSettings() {
         }
       }
 
-      const configToSave = { ...config, logo_url: logoUrl }
+      // Upload du favicon si nouveau fichier
+      if (faviconFile) {
+        const fileExt = faviconFile.name.split('.').pop()
+        const fileName = `favicon-${Date.now()}.${fileExt}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('site-assets')
+          .upload(fileName, faviconFile, { upsert: true })
+
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage
+            .from('site-assets')
+            .getPublicUrl(fileName)
+          faviconUrl = urlData.publicUrl
+        }
+      }
+
+      const configToSave = { ...config, logo_url: logoUrl, favicon_url: faviconUrl }
 
       // Vérifier si existe
       const { data: existing } = await supabase
@@ -298,6 +275,48 @@ export default function SiteSettings() {
                     Changer le logo
                   </Button>
                   <p className="text-xs text-taupe mt-1">PNG ou SVG recommandé</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Favicon */}
+            <div>
+              <label className="block text-sm font-medium text-leather mb-2">
+                Favicon
+              </label>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-champagne/40 to-champagne/20 border border-gold/30 flex items-center justify-center overflow-hidden">
+                  {faviconPreview ? (
+                    <Image
+                      src={faviconPreview}
+                      alt="Favicon"
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <svg className="w-6 h-6 text-taupe" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  )}
+                </div>
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFaviconChange}
+                    className="hidden"
+                    id="favicon-upload"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('favicon-upload')?.click()}
+                    className="border-leather/20"
+                  >
+                    Changer le favicon
+                  </Button>
+                  <p className="text-xs text-taupe mt-1">PNG 64x64 recommandé</p>
                 </div>
               </div>
             </div>

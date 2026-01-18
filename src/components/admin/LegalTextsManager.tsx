@@ -3,22 +3,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { DEFAULT_LEGAL_TEXTS, LegalTexts } from '@/lib/site-settings-defaults'
 
-type LegalTexts = {
-  mentions_legales: string
-  cgv: string
-  politique_confidentialite: string
-  politique_retour: string
-  faq: string
-}
-
-const DEFAULT_TEXTS: LegalTexts = {
-  mentions_legales: '',
-  cgv: '',
-  politique_confidentialite: '',
-  politique_retour: '',
-  faq: '',
-}
+const DEFAULT_TEXTS: LegalTexts = DEFAULT_LEGAL_TEXTS
 
 type TextSection = keyof LegalTexts
 

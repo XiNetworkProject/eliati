@@ -7,6 +7,7 @@ import CartDrawer from './CartDrawer'
 import SearchBar from './SearchBar'
 import { useCart } from '@/contexts/CartContext'
 import { cn } from '@/lib/utils'
+import { useSiteSettings } from '@/contexts/SiteSettingsContext'
 
 const NAV = [
   { href: '/category/colliers', label: 'Colliers' },
@@ -18,6 +19,7 @@ const NAV = [
 export default function Header() {
   const pathname = usePathname()
   const { itemCount } = useCart()
+  const { config } = useSiteSettings()
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -44,6 +46,11 @@ export default function Header() {
 
   return (
     <>
+      {config.show_promo_banner && config.promo_banner_text && (
+        <div className="bg-leather text-ivory text-sm text-center py-2 px-4">
+          {config.promo_banner_text}
+        </div>
+      )}
       <header 
         className={cn(
           'sticky top-0 z-40 transition-all duration-500',
@@ -55,7 +62,7 @@ export default function Header() {
         <div className="mx-auto max-w-6xl px-4 h-20 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="hover-scale">
-            <Logo />
+            <Logo logoUrl={config.logo_url} siteName={config.site_name} />
           </Link>
 
           {/* Desktop Navigation */}
@@ -234,7 +241,7 @@ export default function Header() {
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gold/20">
-          <Logo />
+          <Logo logoUrl={config.logo_url} siteName={config.site_name} />
           <button
             onClick={() => setIsMenuOpen(false)}
             className="w-10 h-10 flex items-center justify-center rounded-xl border border-gold/20 hover:bg-champagne/20 transition-all duration-300"
@@ -305,7 +312,7 @@ export default function Header() {
         {/* Footer */}
         <div className="p-6 border-t border-gold/20 bg-champagne/10">
           <p className="text-sm text-taupe text-center">
-            Bijoux pensés à quatre mains, faits pour durer.
+            {config.slogan || 'Bijoux pensés à quatre mains, faits pour durer.'}
           </p>
         </div>
       </aside>

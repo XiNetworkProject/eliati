@@ -5,9 +5,11 @@ import CategoryTiles from '@/components/CategoryTiles'
 import Section from '@/components/Section'
 import ProductGrid from '@/components/ProductGrid'
 import { supabase } from '@/lib/supabase'
+import { getSiteConfig } from '@/lib/site-settings'
 import Link from 'next/link'
 
 export default async function Home() {
+  const siteConfig = await getSiteConfig()
   const { data: products } = await supabase
     .from('products')
     .select('id,name,slug,price_cents,compare_at_cents,product_images(url)')
@@ -145,11 +147,12 @@ export default async function Home() {
                 <h2 className="font-script text-4xl sm:text-5xl text-leather mb-6">
                   Bijoux pensés à quatre mains, faits pour durer.
                 </h2>
-                <p className="text-taupe text-lg leading-relaxed mb-8">
-                  Chez <strong className="text-leather">EliAti</strong>, deux sœurs transforment les souvenirs
-                  en parures. Des colliers délicats aux bagues fines, chaque pièce est
-                  assemblée avec soin, dans des tonalités ivory, champagne et or rose.
-                  Un style doux, intemporel, qui accompagne chaque moment.
+                <p className="text-taupe text-lg leading-relaxed mb-8 whitespace-pre-line">
+                  {siteConfig.description ||
+                    `Chez ${siteConfig.site_name}, deux sœurs transforment les souvenirs
+en parures. Des colliers délicats aux bagues fines, chaque pièce est
+assemblée avec soin, dans des tonalités ivory, champagne et or rose.
+Un style doux, intemporel, qui accompagne chaque moment.`}
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <div className="flex items-center gap-3 px-4 py-3 bg-white/70 backdrop-blur-sm rounded-xl border border-gold/20">
