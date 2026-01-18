@@ -90,6 +90,16 @@ export default async function ProductPage({
         .limit(4)
     : { data: [] }
 
+  const { data: sameCategoryFallback } =
+    product.categories?.id && (!sameCategoryData || sameCategoryData.length === 0)
+      ? await supabaseServer
+          .from('products')
+          .select(recommendedSelect)
+          .eq('category_id', product.categories.id)
+          .neq('id', product.id)
+          .limit(4)
+      : { data: [] }
+
   const { data: topRatedData } = await supabaseServer
     .from('products')
     .select(recommendedSelect)
@@ -99,6 +109,17 @@ export default async function ProductPage({
     .order('average_rating', { ascending: false })
     .limit(4)
 
+  const { data: topRatedFallback } =
+    !topRatedData || topRatedData.length === 0
+      ? await supabaseServer
+          .from('products')
+          .select(recommendedSelect)
+          .neq('id', product.id)
+          .gt('average_rating', 0)
+          .order('average_rating', { ascending: false })
+          .limit(4)
+      : { data: [] }
+
   const { data: randomPool } = await supabaseServer
     .from('products')
     .select(recommendedSelect)
@@ -106,7 +127,16 @@ export default async function ProductPage({
     .eq('status', 'active')
     .limit(20)
 
-  const shuffledRandom = (randomPool || []).slice()
+  const { data: randomFallback } =
+    !randomPool || randomPool.length === 0
+      ? await supabaseServer
+          .from('products')
+          .select(recommendedSelect)
+          .neq('id', product.id)
+          .limit(20)
+      : { data: [] }
+
+  const shuffledRandom = (randomPool && randomPool.length > 0 ? randomPool : randomFallback || []).slice()
   for (let i = shuffledRandom.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     ;[shuffledRandom[i], shuffledRandom[j]] = [shuffledRandom[j], shuffledRandom[i]]
@@ -126,7 +156,6 @@ export default async function ProductPage({
       : await supabaseServer
           .from('products')
           .select(recommendedSelect)
-          .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(4)
 
@@ -238,8 +267,16 @@ export default async function ProductPage({
           primaryImage={primaryImage}
           variants={variants}
           recommendations={{
-            sameCategory: (sameCategoryData || []).map(mapRecommended),
-            topRated: (topRatedData || []).map(mapRecommended),
+            sameCategory: (
+              sameCategoryData && sameCategoryData.length > 0
+                ? sameCategoryData
+                : sameCategoryFallback || []
+            ).map(mapRecommended),
+            topRated: (
+              topRatedData && topRatedData.length > 0
+                ? topRatedData
+                : topRatedFallback || []
+            ).map(mapRecommended),
             randomPicks: shuffledRandom.slice(0, 4).map(mapRecommended),
             newArrivals:
               (newArrivalsData && newArrivalsData.length > 0
